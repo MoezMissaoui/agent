@@ -15,7 +15,13 @@ from app.services.documents import (
     delete_document_by_filename,
     list_documents_for_tenant,
 )
-from app.services.ingest_jobs import create_job, get_job, mark_completed, mark_failed
+from app.services.ingest_jobs import (
+    create_job,
+    get_job,
+    mark_completed,
+    mark_failed,
+    update_progress,
+)
 from app.services.ingestion import ingest_file_bytes
 
 ALLOWED_EXTENSIONS = {".pdf", ".txt"}
@@ -39,6 +45,7 @@ async def _ingest_task(
             user_id=user_id,
             agent_id=agent_id,
             is_pdf=is_pdf,
+            on_progress=lambda p, s: update_progress(job_id, p, s),
         )
         mark_completed(job_id, n)
     except Exception as exc:  # pragma: no cover
@@ -102,6 +109,8 @@ async def ingest_job_status(
     return IngestJobStatusResponse(
         job_id=job_id,
         status=row["status"],
+        progress=int(row.get("progress", 0)),
+        current_step=str(row.get("current_step", "")),
         user_id=row["user_id"],
         agent_id=row["agent_id"],
         filename=row["filename"],

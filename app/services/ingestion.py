@@ -1,4 +1,5 @@
 import uuid
+from collections.abc import Callable
 
 import fitz
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -28,11 +29,16 @@ def ingest_file_bytes(
     user_id: str,
     agent_id: str,
     is_pdf: bool,
+    on_progress: Callable[[int, str], None] | None = None,
 ) -> int:
+    if on_progress:
+        on_progress(15, "Extraction du texte")
     text = _extract_pdf(data) if is_pdf else _extract_txt(data)
     if not text.strip():
         return 0
 
+    if on_progress:
+        on_progress(40, "Génération des embeddings")
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=1000,
         chunk_overlap=150,
@@ -41,6 +47,8 @@ def ingest_file_bytes(
     if not chunks:
         return 0
 
+    if on_progress:
+        on_progress(70, "Stockage en base de données")
     collection = get_collection()
     ids = [str(uuid.uuid4()) for _ in chunks]
     metadatas = [

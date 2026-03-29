@@ -64,7 +64,7 @@ Isolation multi-tenant : **`user_id`** + **`agent_id`** sur toutes les routes ci
 | Méthode | Chemin | Description |
 |---------|--------|-------------|
 | `POST` | `/internal/v1/documents/ingest` | `multipart` : `file` (.pdf / .txt), `user_id`, `agent_id` → **202** + `job_id` ; traitement en arrière-plan |
-| `GET` | `/internal/v1/documents/ingest/status/{job_id}` | Statut du job ; query `user_id`, `agent_id` (identiques au POST) |
+| `GET` | `/internal/v1/documents/ingest/status/{job_id}` | Statut : `processing` \| `completed` \| `failed` ; `progress` (0–100) ; `current_step` (ex. extraction, embeddings, stockage) ; query `user_id`, `agent_id` |
 | `GET` | `/internal/v1/documents` | Liste des fichiers indexés (query `user_id`, `agent_id`) |
 | `DELETE` | `/internal/v1/documents/file` | Supprime les chunks d’un fichier (query `user_id`, `agent_id`, `filename`) |
 | `DELETE` | `/internal/v1/documents/all` | Supprime tous les chunks du tenant |

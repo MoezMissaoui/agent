@@ -32,7 +32,9 @@ def create_job(*, user_id: str, agent_id: str, filename: str) -> str:
     with _lock:
         _evict_oldest_if_needed()
         _jobs[job_id] = {
-            "status": "pending",
+            "status": "processing",
+            "progress": 0,
+            "current_step": "En attente du traitement",
             "user_id": user_id,
             "agent_id": agent_id,
             "filename": filename,
@@ -43,6 +45,15 @@ def create_job(*, user_id: str, agent_id: str, filename: str) -> str:
     return job_id
 
 
+def update_progress(job_id: str, progress: int, current_step: str) -> None:
+    with _lock:
+        row = _jobs.get(job_id)
+        if not row:
+            return
+        row["progress"] = max(0, min(100, progress))
+        row["current_step"] = current_step
+
+
 def mark_completed(job_id: str, chunks_indexed: int) -> None:
     with _lock:
         row = _jobs.get(job_id)
@@ -50,6 +61,8 @@ def mark_completed(job_id: str, chunks_indexed: int) -> None:
             return
         row["status"] = "completed"
         row["chunks_indexed"] = chunks_indexed
+        row["progress"] = 100
+        row["current_step"] = "Terminé"
 
 
 def mark_failed(job_id: str, error: str) -> None:
@@ -59,6 +72,7 @@ def mark_failed(job_id: str, error: str) -> None:
             return
         row["status"] = "failed"
         row["error"] = error
+        row["current_step"] = "Échec du traitement"
 
 
 def get_job(job_id: str) -> dict[str, Any] | None:

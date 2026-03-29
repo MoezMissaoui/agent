@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 
@@ -34,7 +36,12 @@ class IngestAcceptedResponse(BaseModel):
 
 class IngestJobStatusResponse(BaseModel):
     job_id: str
-    status: str  # pending | completed | failed
+    status: Literal["processing", "completed", "failed"]
+    progress: int = Field(ge=0, le=100, description="Pourcentage d’avancement (0–100).")
+    current_step: str = Field(
+        ...,
+        description='Étape courante : ex. « Extraction du texte », « Génération des embeddings », « Stockage en base de données ».',
+    )
     user_id: str
     agent_id: str
     filename: str
