@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     openai_model: str = "gpt-4o-mini"
     api_host: str = "0.0.0.0"
     api_port: int = 8000
+    # Si non vide, exige l'en-tête X-API-Key sur les routes /internal/v1 (voir app.core.auth).
+    internal_api_key: str = ""
     chroma_persist_path: str = "./chroma_data"
     global_collection_name: str = "global_rag_collection"
     # JSON store for agent name + description (per user_id / agent_id), see /internal/v1/agents/profile
