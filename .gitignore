@@ -1,0 +1,8 @@
+.env
+chroma_data/
+__pycache__/
+*.pyc
+.venv/
+venv/
+logs/
+agent_profiles/
