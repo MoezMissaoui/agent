@@ -28,6 +28,12 @@ cp .env.example .env   # renseigner GEMINI_API_KEY ou OPENAI_API_KEY, LLM_PROVID
 docker compose up --build
 ```
 
+**Développement** (code monté depuis l’hôte, **reload** automatique — pas de rebuild à chaque modification Python) :
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+```
+
 - **Swagger :** `http://127.0.0.1:<API_PORT>/docs` — `API_PORT` vient du `.env` (port **hôte** ; l’app écoute en **8000** dans le conteneur).
 - **Données persistantes** (volumes nommés) : Chroma `/data/chroma`, profils `/data/agent_profiles`, logs `/data/logs` (surcharge des chemins du `.env` via `docker-compose.yml`).
 - **Image seule :** `docker build -t data-ai-plane .` puis `docker run --env-file .env -e API_PORT=8000 -e CHROMA_PERSIST_PATH=/data/chroma -v chroma:/data/chroma -p 8000:8000 data-ai-plane` (adapter volumes et variables).
