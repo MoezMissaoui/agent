@@ -1,0 +1,22 @@
+services:
+  api:
+    build: .
+    env_file:
+      - .env
+    environment:
+      API_HOST: "0.0.0.0"
+      API_PORT: "8000"
+      CHROMA_PERSIST_PATH: /data/chroma
+      AGENT_PROFILES_PATH: /data/agent_profiles
+      LOG_DIR: /data/logs
+    ports:
+      - "${API_PORT:-8000}:8000"
+    volumes:
+      - chroma_data:/data/chroma
+      - agent_profiles:/data/agent_profiles
+      - logs:/data/logs
+
+volumes:
+  chroma_data:
+  agent_profiles:
+  logs:

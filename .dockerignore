@@ -1,0 +1,11 @@
+.venv
+venv
+__pycache__
+*.pyc
+.git
+chroma_data
+logs
+agent_profiles
+.env
+*.md
+.dockerignore

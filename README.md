@@ -19,6 +19,21 @@ python run.py
 
 **Embeddings optionnels :** `EMBEDDING_MODEL` (ex. Sentence Transformers) — ne pas changer le modèle après indexation sans ré-ingérer ; installer `sentence-transformers` si besoin.
 
+## Docker
+
+Prérequis : **Docker** et **Docker Compose** v2.
+
+```bash
+cp .env.example .env   # renseigner GEMINI_API_KEY ou OPENAI_API_KEY, LLM_PROVIDER, etc.
+docker compose up --build
+```
+
+- **Swagger :** `http://127.0.0.1:<API_PORT>/docs` — `API_PORT` vient du `.env` (port **hôte** ; l’app écoute en **8000** dans le conteneur).
+- **Données persistantes** (volumes nommés) : Chroma `/data/chroma`, profils `/data/agent_profiles`, logs `/data/logs` (surcharge des chemins du `.env` via `docker-compose.yml`).
+- **Image seule :** `docker build -t data-ai-plane .` puis `docker run --env-file .env -e API_PORT=8000 -e CHROMA_PERSIST_PATH=/data/chroma -v chroma:/data/chroma -p 8000:8000 data-ai-plane` (adapter volumes et variables).
+
+Avec **`EMBEDDING_MODEL`** (Sentence Transformers), étendre le `Dockerfile` (`pip install sentence-transformers` + dépendances éventuelles) : l’image de base ne les inclut pas.
+
 ## Configuration
 
 Toutes les variables sont documentées dans **`.env.example`**. Les plus utilisées :
