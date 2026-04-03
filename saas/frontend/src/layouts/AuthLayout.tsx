@@ -8,6 +8,9 @@ type Props = {
   subtitle?: string;
 };
 
+const authBrandTitle =
+  import.meta.env.VITE_APP_NAME?.trim() || 'Synapse';
+
 export function AuthLayout({ children, title, subtitle }: Props) {
   return (
     <div className="relative flex min-h-screen flex-col bg-surface px-4 py-12 dark:bg-surface-dark">
@@ -22,7 +25,9 @@ export function AuthLayout({ children, title, subtitle }: Props) {
           <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-lg font-bold text-primary dark:bg-primary/20">
             S
           </span>
-          <span className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">Synapse</span>
+          <span className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
+            {authBrandTitle}
+          </span>
         </Link>
         <div className="rounded-2xl border border-slate-200/90 bg-white p-8 shadow-xl shadow-slate-200/40 dark:border-slate-700/80 dark:bg-slate-900/90 dark:shadow-black/40">
           <h1 className="text-center text-xl font-semibold text-slate-900 dark:text-white">{title}</h1>
