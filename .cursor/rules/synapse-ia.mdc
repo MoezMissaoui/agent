@@ -1,0 +1,45 @@
+---
+description: Monorepo Synapse IA — qualité de code, SOLID, organisation
+alwaysApply: true
+---
+
+# Synapse IA
+
+## Architecture
+
+- **Control Plane** (`saas/backend` NestJS + MySQL, `saas/frontend` React/Vite) : métadonnées SaaS, API applicative.
+- **Data / AI Plane** (`agent/` FastAPI + Chroma + LLM) : RAG ; `user_id` / `agent_id` en chaînes.
+
+## Code simple et lisible
+
+- Privilégier la **clarté** à l’astuce : noms explicites, fonctions courtes, flux linéaires.
+- **Un fichier / une classe = une responsabilité** principale ; extraire plutôt qu’empiler les `if`.
+- Éviter la duplication inutile ; factoriser quand la même règle métier apparaît plusieurs fois.
+
+## Commentaires
+
+- Commenter le **pourquoi** et les **invariants** (cas limites, contrats avec d’autres modules), pas ce que le code fait mot pour mot.
+- Documenter les **points d’extension** et les **hypothèses** (ex. format d’ID, ordre d’appel).
+- Les API publiques (exports, routes, hooks réutilisables) : courte description ou JSDoc si utile.
+
+## SOLID (obligatoire comme fil conducteur)
+
+- **S** — Une classe / module = une raison de changer ; découper les services trop larges.
+- **O** — Ouvert à l’extension (stratégies, interfaces), fermé à la modification massive des modules stables.
+- **L** — Les implémentations substituables doivent respecter le contrat attendu sans surprises.
+- **I** — Interfaces / contrats **petits et ciblés** ; éviter les « god interfaces ».
+- **D** — Dépendre d’**abstractions** (ports, interfaces) plutôt que de concrétions directes quand ça clarifie les tests et le remplacement.
+
+## Organisation
+
+- Respecter l’arborescence du projet (`saas/`, `agent/`, `docs/`).
+- Changements **ciblés** : pas de refactor global ni suppression de code sans certitude ni demande explicite.
+- Docker : racine `docker-compose.yml`, `Makefile` ; pas de compose dans `agent/`.
+
+## Documentation dépôt
+
+- `README.md` racine, `docs/TECHNICAL.md`, README par composant.
+
+## Secrets
+
+- Ne pas committer `.env` ; ne pas exposer de clés dans le chat ou les tickets.

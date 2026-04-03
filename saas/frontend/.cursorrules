@@ -4,7 +4,11 @@
 - **UI:** **React** with **TypeScript**
 - **Build:** **Vite**
 - **Styling:** **TailwindCSS**
-- **HTTP client:** **Axios**
+- **HTTP client:** **Axios** (version **pinnée** dans `package.json` — voir sécurité ci-dessous)
+
+## Axios — supply chain (ne pas ignorer)
+- **Versions à ne jamais utiliser :** `1.14.1`, `0.30.4` (compromission npm, dépendance malveillante `plain-crypto-js`, script postinstall).
+- **Versions stables acceptées :** `1.14.0` (ligne 1.x actuelle), ou branche 0.x : `0.30.3` — ne pas mettre à jour Axios sans vérifier l’avis sécurité ; garder la version exacte dans `package.json` tant qu’aucune version corrigée n’est publiée officiellement.
 
 ## Code principles (mandatory)
 - **Components:** functional components only (no class components).

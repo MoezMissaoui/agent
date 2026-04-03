@@ -1,0 +1,29 @@
+---
+description: React Control Plane — Vite, Tailwind, Axios
+globs: saas/frontend/**/*.{tsx,ts,css}
+alwaysApply: false
+---
+
+# Frontend (React)
+
+## Stack
+
+**React** + **TypeScript**, **Vite**, **TailwindCSS**, **Axios** pour le HTTP.
+
+## Principes
+
+- Code **simple** et composants **petits** ; **SOLID** via séparation des rôles (UI vs logique).
+- **Composants fonctionnels** uniquement.
+- Logique métier et effets dans **hooks personnalisés** ; fichiers organisés par feature ou par type de façon cohérente.
+- **Container / Presenter** : conteneurs (orchestration, hooks) vs présentationnels (props → UI).
+- **Commentaires** sur comportement non trivial, états synchronisés avec l’API, ou pièges UX.
+
+## Axios (sécurité)
+
+- Dépendance **pinnée** à **`1.14.0`** dans `package.json` (pas de `^` vers `1.14.1`).
+- **Ne pas** installer les versions signalées compromises : **`1.14.1`**, **`0.30.4`** (supply chain / `plain-crypto-js`).
+- Avant toute montée de version Axios, vérifier l’avis du mainteneur et le lockfile.
+
+## Variables d’environnement
+
+- Préfixe **`VITE_`** pour toute variable exposée au bundle client.

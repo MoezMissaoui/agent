@@ -1,0 +1,24 @@
+---
+description: NestJS Control Plane — TypeORM, modules, DTOs
+globs: saas/backend/**/*.ts
+alwaysApply: false
+---
+
+# Backend (NestJS)
+
+## Stack
+
+TypeScript, **NestJS**, **TypeORM**, **MySQL** ; config via `@nestjs/config`.
+
+## Principes
+
+- Code **simple** : services et méthodes focalisés ; **SOLID** (modules = frontières, contrats explicites).
+- **Modules** comme frontières ; **injection de dépendances** pour les providers.
+- **DTOs** avec `class-validator` / `class-transformer` pour les entrées API.
+- Entités dans `src/database/entities/` ; logique métier dans les **services**, pas dans les contrôleurs.
+- **Commentaires** sur règles métier, cas limites et choix d’architecture (pourquoi ce module existe).
+
+## À éviter
+
+- `synchronize: true` en production (migrations en prod).
+- Exposer des secrets dans les logs ou réponses API.

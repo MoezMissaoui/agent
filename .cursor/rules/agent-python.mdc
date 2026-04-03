@@ -1,0 +1,19 @@
+---
+description: Data / AI Plane — FastAPI, RAG, routes internes
+globs: agent/**/*.py
+alwaysApply: false
+---
+
+# Agent (FastAPI)
+
+## Contexte
+
+Service **FastAPI** : routes sous `/internal/v1` ; auth optionnelle **`X-API-Key`** si `INTERNAL_API_KEY` est défini.
+
+## Pratiques
+
+- Code **simple** : fonctions courtes, couches claires (routes → services → accès données / LLM). **SOLID** : services à responsabilité unique, dépendances injectées ou factories testables.
+- **Commentaires** sur le pipeline RAG, les hypothèses Chroma, et les erreurs métier renvoyées au client.
+- Isolation multi-tenant via **`user_id`** et **`agent_id`** sur les requêtes.
+- Ne pas exposer ce service publiquement sans gateway / réseau privé.
+- Cohérence Chroma et profils agents (chemins config).
