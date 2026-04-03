@@ -7,7 +7,7 @@ export function HomePage() {
   const { user, logout } = useAuth();
 
   return (
-    <div className="relative flex min-h-screen flex-col bg-gradient-to-b from-slate-100 to-slate-200/90 px-4 py-12 dark:from-[#0b0e14] dark:to-[#12171f]">
+    <div className="relative flex min-h-screen flex-col bg-surface px-4 py-12 dark:bg-surface-dark">
       <div className="absolute right-4 top-4 z-10 md:right-8 md:top-8">
         <ThemeToggle />
       </div>
