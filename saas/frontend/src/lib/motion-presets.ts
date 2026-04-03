@@ -1,9 +1,4 @@
-/** Courbes et durées pour des animations lentes et fluides (respect de prefers-reduced-motion côté composants). */
-export const pageTransition = (reduceMotion: boolean | null) =>
-  reduceMotion
-    ? { duration: 0 }
-    : { duration: 0.62, ease: [0.19, 1, 0.22, 1] as const };
-
+/** Courbes et durées pour les notices (respect de prefers-reduced-motion côté composants). */
 export const noticeTransition = (reduceMotion: boolean | null) =>
   reduceMotion
     ? { duration: 0 }
