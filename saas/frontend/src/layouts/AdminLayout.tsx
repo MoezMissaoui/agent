@@ -1,6 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
-import { Button } from '../components/ui/Button';
 import { ThemeToggle } from '../components/ui/ThemeToggle';
 import { useAuth } from '../hooks/useAuth';
 import { appInitial, appName } from '../lib/brand';
@@ -63,10 +62,32 @@ function IconSettings(props: { className?: string }) {
 
 const navIcon = [IconDashboard, IconUsers, IconKey, IconSettings] as const;
 
+function IconChevronDown(props: { className?: string }) {
+  return (
+    <svg className={props.className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <path d="M6 9l6 6 6-6" />
+    </svg>
+  );
+}
+
 export function AdminLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
   const { user, logout } = useAuth();
   const { pathname } = useLocation();
+
+  useEffect(() => {
+    function handlePointerDown(e: PointerEvent) {
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setProfileOpen(false);
+      }
+    }
+    if (profileOpen) {
+      document.addEventListener('pointerdown', handlePointerDown);
+      return () => document.removeEventListener('pointerdown', handlePointerDown);
+    }
+  }, [profileOpen]);
 
   return (
     <div className="flex min-h-[100dvh] bg-surface dark:bg-surface-dark">
@@ -129,19 +150,11 @@ export function AdminLayout() {
             );
           })}
         </nav>
-
-        <div className="border-t border-slate-200/90 p-3 dark:border-slate-700/80">
-          <p className="truncate px-1 text-xs text-slate-500 dark:text-slate-500">Signed in</p>
-          <p className="truncate px-1 text-sm font-medium text-slate-800 dark:text-slate-200">{user?.email}</p>
-          <Button type="button" variant="ghost" className="mt-2 w-full justify-center" onClick={() => logout()}>
-            Sign out
-          </Button>
-          </div>
         </div>
       </aside>
 
       <div className="flex min-h-[100dvh] min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-14 shrink-0 animate-admin-topbar items-center justify-between gap-4 border-b border-slate-200/90 bg-white/90 px-4 backdrop-blur dark:border-slate-700/80 dark:bg-slate-900/90 md:h-16 md:px-6">
+        <header className="sticky top-0 z-30 flex h-14 shrink-0 animate-admin-topbar items-center justify-between gap-4 overflow-visible border-b border-slate-200/90 bg-white/90 px-4 backdrop-blur dark:border-slate-700/80 dark:bg-slate-900/90 md:h-16 md:px-6">
           <div className="flex min-w-0 items-center gap-3">
             <button
               type="button"
@@ -153,8 +166,44 @@ export function AdminLayout() {
             </button>
             <span className="truncate text-sm font-semibold text-slate-900 dark:text-white">Control Plane</span>
           </div>
-          <div className="flex shrink-0 items-center gap-1">
+          <div className="flex shrink-0 items-center gap-2">
             <ThemeToggle />
+            <div className="relative" ref={profileRef}>
+              <button
+                type="button"
+                aria-expanded={profileOpen}
+                aria-haspopup="menu"
+                aria-label="Account menu"
+                className="flex items-center gap-1.5 rounded-xl border border-slate-200/90 bg-white/80 px-2 py-1.5 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800/80 dark:hover:bg-slate-800"
+                onClick={() => setProfileOpen((o) => !o)}
+              >
+                <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary dark:bg-primary/20">
+                  {user?.email?.charAt(0).toUpperCase() ?? '?'}
+                </span>
+                <IconChevronDown className={`shrink-0 text-slate-500 transition dark:text-slate-400 ${profileOpen ? '-rotate-180' : ''}`} />
+              </button>
+              {profileOpen ? (
+                <div
+                  role="menu"
+                  className="absolute right-0 top-[calc(100%+6px)] z-50 min-w-[200px] rounded-xl border border-slate-200/90 bg-white py-1 shadow-lg dark:border-slate-700/80 dark:bg-slate-900"
+                >
+                  <p className="truncate border-b border-slate-100 px-3 py-2 text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                    {user?.email}
+                  </p>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="w-full px-3 py-2.5 text-left text-sm text-slate-800 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+                    onClick={() => {
+                      setProfileOpen(false);
+                      logout();
+                    }}
+                  >
+                    Sign out
+                  </button>
+                </div>
+              ) : null}
+            </div>
           </div>
         </header>
 
