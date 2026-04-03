@@ -1,0 +1,12 @@
+# Frontend — Control Plane (React)
+
+## Stack
+- **UI:** **React** with **TypeScript**
+- **Build:** **Vite**
+- **Styling:** **TailwindCSS**
+- **HTTP client:** **Axios**
+
+## Code principles (mandatory)
+- **Components:** functional components only (no class components).
+- **Business logic:** encapsulate in **custom hooks**; keep components thin.
+- **Separation:** use **Container / Presenter** pattern — containers (hooks + orchestration) vs presentational components (props in, UI out).

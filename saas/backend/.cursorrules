@@ -1,0 +1,13 @@
+# Backend — Control Plane (NestJS)
+
+## Stack
+- **Runtime / language:** Node.js, **NestJS**, **TypeScript**
+- **Persistence:** **TypeORM** with **MySQL**
+
+## Code principles (mandatory)
+- **SOLID:** apply all five principles in module design, services, and repositories; favor small interfaces and dependency inversion.
+- **Architecture:** NestJS **modules** as boundaries; use **dependency injection** for all providers.
+- **API layer:** use **DTOs** with `class-validator` / `class-transformer` for input validation where applicable.
+- **Style:** clean code, explicit naming, single responsibility per class/file.
+
+When adding features, extend via new modules or providers rather than god objects.

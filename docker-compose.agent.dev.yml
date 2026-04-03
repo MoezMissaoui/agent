@@ -1,0 +1,14 @@
+# Surcharge : agent FastAPI avec code monté + --reload
+# Usage : docker compose --env-file .env --env-file agent/.env -f docker-compose.yml -f docker-compose.agent.dev.yml up --build
+
+services:
+  agent:
+    volumes:
+      - ./agent/app:/app/app
+      - ./agent/run.py:/app/run.py
+    command:
+      [
+        "sh",
+        "-c",
+        "exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload",
+      ]

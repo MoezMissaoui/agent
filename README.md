@@ -1,115 +1,49 @@
-# Data / AI Plane
+# Synapse IA
 
-Microservice **FastAPI** : ingestion **PDF / TXT** → **ChromaDB** (vecteurs + métadonnées `user_id`, `agent_id`), puis **chat RAG** via **Gemini** ou **OpenAI** (prompt strict, température 0). Profil agent optionnel (nom + description) pour cadrer le système prompt.
+Monorepo pour une plateforme **RAG multi-tenant** : un **Control Plane** (SaaS — métadonnées, API applicative) et un **Data / AI Plane** (ingestion vectorielle et chat RAG).
 
-**Prérequis :** Python 3.10+, clé API selon `LLM_PROVIDER`. Stack : Chroma, PyMuPDF, LangChain (split), httpx.
+| Composant | Chemin | Rôle |
+|-----------|--------|------|
+| Control Plane — API | [`saas/backend`](saas/backend) | NestJS, TypeORM, MySQL — utilisateurs, agents, documents (statut), sessions, messages |
+| Control Plane — UI | [`saas/frontend`](saas/frontend) | React, Vite, Tailwind — application web |
+| Data / AI Plane | [`agent`](agent) | FastAPI, ChromaDB, LLM (Gemini / OpenAI) — ingestion et chat internes |
 
-## Démarrage
+Documentation technique consolidée : [`docs/TECHNICAL.md`](docs/TECHNICAL.md).
 
-```bash
-python -m venv .venv
-# Windows: .venv\Scripts\activate   |  Linux/macOS: source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env   # ou copy sous Windows
-python run.py
-```
+## Prérequis
 
-- **Swagger :** `http://127.0.0.1:<API_PORT>/docs` (port défaut `8000`).
-- **Uvicorn direct :** `uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload` (sans charger `.env` sauf variables exportées).
+- **Node.js 20** (npm) pour `saas/backend` et `saas/frontend`
+- **MySQL 8** (ou compatible) pour le Control Plane
+- **Python 3.10+** pour `agent` (voir le README du dossier `agent`)
+- **Docker** (optionnel) pour les Dockerfiles de dev et pour le compose du service `agent`
 
-**Embeddings optionnels :** `EMBEDDING_MODEL` (ex. Sentence Transformers) — ne pas changer le modèle après indexation sans ré-ingérer ; installer `sentence-transformers` si besoin.
+## Docker — stack complète (racine)
 
-## Docker
+Fichiers : [`docker-compose.yml`](docker-compose.yml), [`docker-compose.agent.dev.yml`](docker-compose.agent.dev.yml) (surcharge reload pour l’agent), [`.env.example`](.env.example). Raccourcis : [`Makefile`](Makefile) à la racine (`make help`, `make up-build`, `make dev-build`, etc.).
 
-Prérequis : **Docker** et **Docker Compose** v2.
-
-```bash
-cp .env.example .env   # renseigner GEMINI_API_KEY ou OPENAI_API_KEY, LLM_PROVIDER, etc.
-docker compose up --build
-```
-
-**Développement** (code monté depuis l’hôte, **reload** automatique — pas de rebuild à chaque modification Python) :
+1. Copier `.env.example` vers `.env` à la racine (`MYSQL_ROOT_PASSWORD`, ports `CONTROL_*`, `API_PORT=8546` par défaut pour le port hôte de l’agent).
+2. Copier `agent/.env.example` vers `agent/.env` (clés LLM ; y définir **`API_PORT=8546`** pour le port hôte si tu utilises la commande ci-dessous).
+3. Lancer (recommandé — `API_PORT` lu depuis `agent/.env`) :
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+docker compose --env-file .env --env-file agent/.env up --build
 ```
 
-- **Swagger :** `http://127.0.0.1:<API_PORT>/docs` — `API_PORT` vient du `.env` (port **hôte** ; l’app écoute en **8000** dans le conteneur).
-- **Données persistantes** (volumes nommés) : Chroma `/data/chroma`, profils `/data/agent_profiles`, logs `/data/logs` (surcharge des chemins du `.env` via `docker-compose.yml`).
-- **Image seule :** `docker build -t data-ai-plane .` puis `docker run --env-file .env -e API_PORT=8000 -e CHROMA_PERSIST_PATH=/data/chroma -v chroma:/data/chroma -p 8000:8000 data-ai-plane` (adapter volumes et variables).
+Sinon : `docker compose up --build` (port hôte agent **8546** par défaut, sauf `API_PORT` dans le seul `.env` racine).
 
-Avec **`EMBEDDING_MODEL`** (Sentence Transformers), étendre le `Dockerfile` (`pip install sentence-transformers` + dépendances éventuelles) : l’image de base ne les inclut pas.
+Services exposés : **MySQL** (`MYSQL_PORT`, défaut 3306), **phpMyAdmin** (`PHPMYADMIN_PORT`, défaut **8550** — connexion serveur `mysql`, utilisateur `root`), **Control API** (8547), **Control UI** (8548), **agent** (**8546** ou la valeur de `API_PORT` → **8000** dans le conteneur). Le backend attend MySQL via le hostname Docker `mysql`.
 
-## Configuration
-
-Toutes les variables sont documentées dans **`.env.example`**. Les plus utilisées :
-
-| Variable | Rôle |
-|----------|------|
-| `LLM_PROVIDER` | `gemini` ou `openai` |
-| `GEMINI_API_KEY` / `GEMINI_MODEL` | Appel Gemini |
-| `OPENAI_API_KEY` / `OPENAI_MODEL` | Appel OpenAI |
-| `API_HOST` / `API_PORT` | Écoute HTTP |
-| `CHROMA_PERSIST_PATH` | Dossier persistance Chroma |
-| `RAG_N_RESULTS` / `RAG_MAX_CONTEXT_CHARS` | Top-K retrieval puis plafond caractères contexte LLM |
-| `AGENT_PROFILES_PATH` | Stockage `profiles.json` des profils agents |
-| `LOG_DIR` / `LOG_LEVEL` / `LOG_RETENTION_DAYS` | Logs fichier journalier + rétention ; `app.*` et uvicorn vers le même fichier |
-
-## API — référence groupée
-
-Isolation multi-tenant : **`user_id`** + **`agent_id`** sur toutes les routes ci-dessous.
-
-### Documents
-
-| Méthode | Chemin | Description |
-|---------|--------|-------------|
-| `POST` | `/internal/v1/documents/ingest` | `multipart` : `file` (.pdf / .txt), `user_id`, `agent_id` → **202** + `job_id` ; traitement en arrière-plan |
-| `GET` | `/internal/v1/documents/ingest/status/{job_id}` | Statut : `processing` \| `completed` \| `failed` ; `progress` (0–100) ; `current_step` (ex. extraction, embeddings, stockage) ; query `user_id`, `agent_id` |
-| `GET` | `/internal/v1/documents` | Liste des fichiers indexés (query `user_id`, `agent_id`) |
-| `DELETE` | `/internal/v1/documents/file` | Supprime les chunks d’un fichier (query `user_id`, `agent_id`, `filename`) |
-| `DELETE` | `/internal/v1/documents/all` | Supprime tous les chunks du tenant |
-
-### Agents
-
-| Méthode | Chemin | Description |
-|---------|--------|-------------|
-| `POST` | `/internal/v1/agents/profile` | **Création** — `multipart` : `user_id`, `agent_id`, `name` (optionnel), fichier `description` **.txt** (optionnel) ; au moins l’un des deux. **409** si profil déjà présent |
-| `PUT` | `/internal/v1/agents/profile` | **Mise à jour** — même schéma ; **404** si absent |
-| `GET` | `/internal/v1/agents/profile` | Query `user_id`, `agent_id` — **404** si absent |
-| `DELETE` | `/internal/v1/agents/profile` | Query `user_id`, `agent_id` |
-
-Description longue = fichier **.txt** uniquement (UTF-8) ; max : `AGENT_PROFILE_DESCRIPTION_MAX_BYTES`.
-
-### Chat
-
-| Méthode | Chemin | Description |
-|---------|--------|-------------|
-| `POST` | `/internal/v1/chat` | **JSON** : `user_id`, `agent_id`, `query`, `history` (optionnel), `session_id` (optionnel), `source_filename` (optionnel, un fichier de la liste documents) |
-
-**Erreurs avant appel LLM :** **404** si aucun chunk Chroma pour ce `user_id` → `Utilisateur inexistant.` ; si l’utilisateur a des données mais pas ce couple agent → `Agent inexistant pour cet utilisateur.`
-
-**Astuce :** ne pas laisser le placeholder Swagger `"string"` dans `query` ; sinon une vraie question peut être prise depuis `history` (rôle `user`).
-
-## Exemples `curl`
+Reload du code Python de l’agent sans rebuild d’image :
 
 ```bash
-# Ingestion
-curl -X POST "http://127.0.0.1:8000/internal/v1/documents/ingest" \
-  -F "file=@./notes.txt" -F "user_id=user-1" -F "agent_id=agent-1"
-
-# Profil agent (description = fichier .txt)
-curl -X POST "http://127.0.0.1:8000/internal/v1/agents/profile" \
-  -F "user_id=user-1" -F "agent_id=agent-1" -F "name=Mon assistant" \
-  -F "description=@./mission.txt;type=text/plain"
-
-# Chat
-curl -X POST "http://127.0.0.1:8000/internal/v1/chat" \
-  -H "Content-Type: application/json" \
-  -d '{"user_id":"user-1","agent_id":"agent-1","query":"Résumé du document ?","history":[]}'
+docker compose --env-file .env --env-file agent/.env -f docker-compose.yml -f docker-compose.agent.dev.yml up --build
 ```
 
-## Sécurité
+## Démarrage rapide
 
-- Ne pas versionner `.env`.
-- Exposer ces routes **internes** uniquement derrière réseau privé / gateway (auth, mTLS, etc.).
-- Révoquer les clés API en cas de fuite.
+1. **MySQL** : créer une base (ex. `synapse_control`) et copier [`saas/backend/.env.example`](saas/backend/.env.example) vers `saas/backend/.env`.
+2. **Backend** : `cd saas/backend && npm run start:dev` — écoute par défaut sur le port **8547** (voir `.env`).
+3. **Frontend** : `cd saas/frontend && npm run dev` — port **8548** (voir `vite.config.ts`).
+4. **Agent** : suivre [`agent/README.md`](agent/README.md) (Python ou Docker Compose).
+
+Les README de chaque dossier détaillent les commandes et variables d’environnement.

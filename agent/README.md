@@ -1,0 +1,123 @@
+# Data / AI Plane
+
+> **Synapse — Data / AI Plane :** ce service est le plan **données / IA** (RAG, Chroma, LLM), distinct du **Control Plane** dans `saas/`. Vue d’ensemble du dépôt : [README à la racine](../README.md) · [Documentation technique](../docs/TECHNICAL.md).
+
+Microservice **FastAPI** : ingestion **PDF / TXT** → **ChromaDB** (vecteurs + métadonnées `user_id`, `agent_id`), puis **chat RAG** via **Gemini** ou **OpenAI** (prompt strict, température 0). Profil agent optionnel (nom + description) pour cadrer le système prompt.
+
+**Prérequis :** Python 3.10+, clé API selon `LLM_PROVIDER`. Stack : Chroma, PyMuPDF, LangChain (split), httpx.
+
+## Démarrage
+
+```bash
+python -m venv .venv
+# Windows: .venv\Scripts\activate   |  Linux/macOS: source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env   # ou copy sous Windows
+python run.py
+```
+
+- **Swagger :** `http://127.0.0.1:<API_PORT>/docs` (port défaut `8000`).
+- **Uvicorn direct :** `uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload` (sans charger `.env` sauf variables exportées).
+
+**Embeddings optionnels :** `EMBEDDING_MODEL` (ex. Sentence Transformers) — ne pas changer le modèle après indexation sans ré-ingérer ; installer `sentence-transformers` si besoin.
+
+## Docker
+
+Le **Compose** du dépôt est à la **racine** (`docker-compose.yml`) : il orchestre MySQL, le Control Plane et ce service **agent**. Il n’y a plus de `docker-compose` dans ce dossier.
+
+Prérequis : **Docker** et **Docker Compose** v2, `.env` à la racine du dépôt et `agent/.env` (clés LLM).
+
+```bash
+# depuis la racine du dépôt (parent de agent/)
+cp .env.example .env
+cp agent/.env.example agent/.env   # renseigner les clés API, API_PORT=8546 pour le port hôte, etc.
+docker compose --env-file .env --env-file agent/.env up --build
+```
+
+**Développement** (reload Python sur l’agent, code monté) :
+
+```bash
+docker compose --env-file .env --env-file agent/.env -f docker-compose.yml -f docker-compose.agent.dev.yml up --build
+```
+
+Équivalent : depuis la **racine** du dépôt, `make dev-build` ou `make up-build` (voir le `Makefile` racine).
+
+- **Swagger :** `http://127.0.0.1:<API_PORT>/docs` — `API_PORT` dans **`agent/.env`** (port **hôte**, ex. **8546** ; l’app écoute en **8000** dans le conteneur).
+- **Données persistantes** (volumes nommés du compose racine) : Chroma `/data/chroma`, profils `/data/agent_profiles`, logs `/data/logs`.
+- **Image seule :** `docker build -t data-ai-plane .` puis `docker run --env-file .env -e API_PORT=8000 -e CHROMA_PERSIST_PATH=/data/chroma -v chroma:/data/chroma -p 8546:8000 data-ai-plane` (adapter volumes et variables).
+
+Avec **`EMBEDDING_MODEL`** (Sentence Transformers), étendre le `Dockerfile` (`pip install sentence-transformers` + dépendances éventuelles) : l’image de base ne les inclut pas.
+
+## Configuration
+
+Toutes les variables sont documentées dans **`.env.example`**. Les plus utilisées :
+
+| Variable | Rôle |
+|----------|------|
+| `LLM_PROVIDER` | `gemini` ou `openai` |
+| `GEMINI_API_KEY` / `GEMINI_MODEL` | Appel Gemini |
+| `OPENAI_API_KEY` / `OPENAI_MODEL` | Appel OpenAI |
+| `API_HOST` / `API_PORT` | Écoute HTTP |
+| `CHROMA_PERSIST_PATH` | Dossier persistance Chroma |
+| `RAG_N_RESULTS` / `RAG_MAX_CONTEXT_CHARS` | Top-K retrieval puis plafond caractères contexte LLM |
+| `AGENT_PROFILES_PATH` | Stockage `profiles.json` des profils agents |
+| `LOG_DIR` / `LOG_LEVEL` / `LOG_RETENTION_DAYS` | Logs fichier journalier + rétention ; `app.*` et uvicorn vers le même fichier |
+
+## API — référence groupée
+
+Isolation multi-tenant : **`user_id`** + **`agent_id`** sur toutes les routes ci-dessous.
+
+### Documents
+
+| Méthode | Chemin | Description |
+|---------|--------|-------------|
+| `POST` | `/internal/v1/documents/ingest` | `multipart` : `file` (.pdf / .txt), `user_id`, `agent_id` → **202** + `job_id` ; traitement en arrière-plan |
+| `GET` | `/internal/v1/documents/ingest/status/{job_id}` | Statut : `processing` \| `completed` \| `failed` ; `progress` (0–100) ; `current_step` (ex. extraction, embeddings, stockage) ; query `user_id`, `agent_id` |
+| `GET` | `/internal/v1/documents` | Liste des fichiers indexés (query `user_id`, `agent_id`) |
+| `DELETE` | `/internal/v1/documents/file` | Supprime les chunks d’un fichier (query `user_id`, `agent_id`, `filename`) |
+| `DELETE` | `/internal/v1/documents/all` | Supprime tous les chunks du tenant |
+
+### Agents
+
+| Méthode | Chemin | Description |
+|---------|--------|-------------|
+| `POST` | `/internal/v1/agents/profile` | **Création** — `multipart` : `user_id`, `agent_id`, `name` (optionnel), fichier `description` **.txt** (optionnel) ; au moins l’un des deux. **409** si profil déjà présent |
+| `PUT` | `/internal/v1/agents/profile` | **Mise à jour** — même schéma ; **404** si absent |
+| `GET` | `/internal/v1/agents/profile` | Query `user_id`, `agent_id` — **404** si absent |
+| `DELETE` | `/internal/v1/agents/profile` | Query `user_id`, `agent_id` |
+
+Description longue = fichier **.txt** uniquement (UTF-8) ; max : `AGENT_PROFILE_DESCRIPTION_MAX_BYTES`.
+
+### Chat
+
+| Méthode | Chemin | Description |
+|---------|--------|-------------|
+| `POST` | `/internal/v1/chat` | **JSON** : `user_id`, `agent_id`, `query`, `history` (optionnel), `session_id` (optionnel), `source_filename` (optionnel, un fichier de la liste documents) |
+
+**Erreurs avant appel LLM :** **404** si aucun chunk Chroma pour ce `user_id` → `Utilisateur inexistant.` ; si l’utilisateur a des données mais pas ce couple agent → `Agent inexistant pour cet utilisateur.`
+
+**Astuce :** ne pas laisser le placeholder Swagger `"string"` dans `query` ; sinon une vraie question peut être prise depuis `history` (rôle `user`).
+
+## Exemples `curl`
+
+```bash
+# Ingestion
+curl -X POST "http://127.0.0.1:8000/internal/v1/documents/ingest" \
+  -F "file=@./notes.txt" -F "user_id=user-1" -F "agent_id=agent-1"
+
+# Profil agent (description = fichier .txt)
+curl -X POST "http://127.0.0.1:8000/internal/v1/agents/profile" \
+  -F "user_id=user-1" -F "agent_id=agent-1" -F "name=Mon assistant" \
+  -F "description=@./mission.txt;type=text/plain"
+
+# Chat
+curl -X POST "http://127.0.0.1:8000/internal/v1/chat" \
+  -H "Content-Type: application/json" \
+  -d '{"user_id":"user-1","agent_id":"agent-1","query":"Résumé du document ?","history":[]}'
+```
+
+## Sécurité
+
+- Ne pas versionner `.env`.
+- Exposer ces routes **internes** uniquement derrière réseau privé / gateway (auth, mTLS, etc.).
+- Révoquer les clés API en cas de fuite.

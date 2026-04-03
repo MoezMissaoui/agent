@@ -1,29 +1,60 @@
-VENV := .venv
+# Synapse IA — Docker Compose (racine du dépôt)
+# Prérequis : .env et agent/.env
+# Usage : make help | make up-build | make dev-build
 
-ifeq ($(OS),Windows_NT)
-	PY := $(VENV)/Scripts/python.exe
-	PIP := $(VENV)/Scripts/pip.exe
-else
-	PY := $(VENV)/bin/python
-	PIP := $(VENV)/bin/pip
-endif
+COMPOSE := docker compose
+ENV := --env-file .env --env-file agent/.env
+BASE := -f docker-compose.yml
+DEV := -f docker-compose.yml -f docker-compose.agent.dev.yml
 
-.PHONY: run install venv docker-prod docker-dev
+.DEFAULT_GOAL := help
 
-# Start the API (reads API_HOST / API_PORT and secrets from .env via run.py)
-run:
-	$(PY) run.py
+.PHONY: help up up-build stop down down-volumes ps logs build dev dev-build restart
 
-# Docker : image figée, rebuild nécessaire si le code change sans volume dev
-docker-prod:
-	docker compose up -d --build
+help:
+	@echo "Synapse IA - Docker"
+	@echo "  make up-build      Stack (detached) + build images"
+	@echo "  make up            Stack sans rebuild"
+	@echo "  make dev-build     Stack + agent uvicorn --reload"
+	@echo "  make dev           Idem sans rebuild"
+	@echo "  make stop          docker compose stop"
+	@echo "  make down          docker compose down"
+	@echo "  make down-volumes  down -v (MySQL/Chroma)"
+	@echo "  make ps            docker compose ps"
+	@echo "  make logs          docker compose logs -f"
+	@echo "  make build         docker compose build"
+	@echo "  make restart       down puis up-build"
 
-# Docker : code monté + uvicorn --reload (voir docker-compose.dev.yml)
-docker-dev:
-	docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+up-build:
+	$(COMPOSE) $(ENV) $(BASE) up -d --build
 
-venv:
-	python -m venv $(VENV)
+up:
+	$(COMPOSE) $(ENV) $(BASE) up -d
 
-install: venv
-	$(PIP) install -r requirements.txt
+dev-build:
+	$(COMPOSE) $(ENV) $(DEV) up -d --build
+
+dev:
+	$(COMPOSE) $(ENV) $(DEV) up -d
+
+stop:
+	$(COMPOSE) $(BASE) stop
+
+down:
+	$(COMPOSE) $(BASE) down
+
+down-volumes:
+	$(COMPOSE) $(BASE) down -v
+
+ps:
+	$(COMPOSE) $(BASE) ps
+
+logs:
+	$(COMPOSE) $(BASE) logs -f
+
+build:
+	$(COMPOSE) $(ENV) $(BASE) build
+
+restart:
+	$(COMPOSE) $(BASE) down
+	$(COMPOSE) $(ENV) $(BASE) up -d --build

@@ -1,8 +1,82 @@
+# Synapse IA — stack complète (Control Plane + Data / AI Plane)
+# Prérequis : .env à la racine et agent/.env (clés LLM). Port hôte agent : défaut 8546 (${API_PORT:-8546}),
+# ou même valeur que agent/.env via : docker compose --env-file .env --env-file agent/.env up --build
+#
+#   docker compose up --build
+#
+# Dev agent avec reload Python :
+#   docker compose --env-file .env --env-file agent/.env -f docker-compose.yml -f docker-compose.agent.dev.yml up --build
+
 services:
-  api:
-    build: .
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD in .env}
+      MYSQL_DATABASE: ${DB_NAME:-synapse_control}
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mysqladmin ping -h 127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\" || exit 1",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:5
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD in .env}
+    ports:
+      - "${PHPMYADMIN_PORT:-8550}:80"
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  backend:
+    build:
+      context: ./saas/backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      PORT: "8547"
+      NODE_ENV: development
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      DB_USER: root
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD in .env}
+      DB_NAME: ${DB_NAME:-synapse_control}
+    ports:
+      - "${CONTROL_API_PORT:-8547}:8547"
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./saas/frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${CONTROL_UI_PORT:-8548}:8548"
+
+  agent:
+    build:
+      context: ./agent
+      dockerfile: Dockerfile
+    restart: unless-stopped
     env_file:
-      - .env
+      - ./agent/.env
     environment:
       API_HOST: "0.0.0.0"
       API_PORT: "8000"
@@ -10,13 +84,14 @@ services:
       AGENT_PROFILES_PATH: /data/agent_profiles
       LOG_DIR: /data/logs
     ports:
-      - "${API_PORT:-8000}:8000"
+      - "${API_PORT:-8546}:8000"
     volumes:
       - chroma_data:/data/chroma
       - agent_profiles:/data/agent_profiles
       - logs:/data/logs
 
 volumes:
+  mysql_data:
   chroma_data:
   agent_profiles:
   logs:
