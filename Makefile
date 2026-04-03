@@ -5,7 +5,7 @@
 COMPOSE := docker compose
 ENV := --env-file .env --env-file agent/.env
 BASE := -f docker-compose.yml
-DEV := -f docker-compose.yml -f docker-compose.agent.dev.yml
+DEV := -f docker-compose.yml -f docker-compose.dev.yml
 
 .DEFAULT_GOAL := help
 
@@ -15,8 +15,8 @@ help:
 	@echo "Synapse IA - Docker"
 	@echo "  make up-build      Stack (detached) + build images"
 	@echo "  make up            Stack sans rebuild"
-	@echo "  make dev-build     Stack + agent uvicorn --reload"
-	@echo "  make dev           Idem sans rebuild"
+	@echo "  make dev-build     Stack dev (hot reload backend + frontend + agent) + build"
+	@echo "  make dev           Idem sans rebuild image"
 	@echo "  make stop          docker compose stop"
 	@echo "  make down          docker compose down"
 	@echo "  make down-volumes  down -v (MySQL/Chroma)"

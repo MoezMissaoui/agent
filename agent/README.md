@@ -34,13 +34,13 @@ cp agent/.env.example agent/.env   # renseigner les clés API, API_PORT=8546 pou
 docker compose --env-file .env --env-file agent/.env up --build
 ```
 
-**Développement** (reload Python sur l’agent, code monté) :
+**Développement** (reload Nest + Vite + agent, code monté) :
 
 ```bash
-docker compose --env-file .env --env-file agent/.env -f docker-compose.yml -f docker-compose.agent.dev.yml up --build
+docker compose --env-file .env --env-file agent/.env -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 ```
 
-Équivalent : depuis la **racine** du dépôt, `make dev-build` ou `make up-build` (voir le `Makefile` racine).
+Équivalent : depuis la **racine** du dépôt, `make dev-build` puis `make dev` (voir le `Makefile` racine).
 
 - **Swagger :** `http://127.0.0.1:<API_PORT>/docs` — `API_PORT` dans **`agent/.env`** (port **hôte**, ex. **8546** ; l’app écoute en **8000** dans le conteneur).
 - **Données persistantes** (volumes nommés du compose racine) : Chroma `/data/chroma`, profils `/data/agent_profiles`, logs `/data/logs`.

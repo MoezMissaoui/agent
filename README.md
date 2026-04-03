@@ -19,7 +19,7 @@ Documentation technique consolidée : [`docs/TECHNICAL.md`](docs/TECHNICAL.md).
 
 ## Docker — stack complète (racine)
 
-Fichiers : [`docker-compose.yml`](docker-compose.yml), [`docker-compose.agent.dev.yml`](docker-compose.agent.dev.yml) (surcharge reload pour l’agent), [`.env.example`](.env.example). Raccourcis : [`Makefile`](Makefile) à la racine (`make help`, `make up-build`, `make dev-build`, etc.).
+Fichiers : [`docker-compose.yml`](docker-compose.yml), [`docker-compose.dev.yml`](docker-compose.dev.yml) (hot reload Nest + Vite + agent), [`.env.example`](.env.example). Raccourcis : [`Makefile`](Makefile) à la racine (`make help`, `make up-build`, `make dev-build`, etc.).
 
 1. Copier `.env.example` vers `.env` à la racine (`MYSQL_ROOT_PASSWORD`, ports `CONTROL_*`, `API_PORT=8546` par défaut pour le port hôte de l’agent).
 2. Copier `agent/.env.example` vers `agent/.env` (clés LLM ; y définir **`API_PORT=8546`** pour le port hôte si tu utilises la commande ci-dessous).
@@ -33,11 +33,13 @@ Sinon : `docker compose up --build` (port hôte agent **8546** par défaut, sauf
 
 Services exposés : **MySQL** (`MYSQL_PORT`, défaut 3306), **phpMyAdmin** (`PHPMYADMIN_PORT`, défaut **8550** — connexion serveur `mysql`, utilisateur `root`), **Control API** (8547), **Control UI** (8548), **agent** (**8546** ou la valeur de `API_PORT` → **8000** dans le conteneur). Le backend attend MySQL via le hostname Docker `mysql`.
 
-Reload du code Python de l’agent sans rebuild d’image :
+Développement (reload backend, frontend et agent sans rebuild à chaque edit) :
 
 ```bash
-docker compose --env-file .env --env-file agent/.env -f docker-compose.yml -f docker-compose.agent.dev.yml up --build
+docker compose --env-file .env --env-file agent/.env -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 ```
+
+Puis `make dev` pour relancer sans `--build` quand seul le code change.
 
 ## Démarrage rapide
 

@@ -25,7 +25,7 @@ MySQL : port **3306** par défaut quand le service est lancé via le compose rac
 ### Orchestration Docker (racine du dépôt)
 
 - **[`docker-compose.yml`](../docker-compose.yml)** : services **`mysql`**, **`phpmyadmin`** (image `phpmyadmin/phpmyadmin:5`, `PMA_HOST=mysql`), **`backend`**, **`frontend`**, **`agent`** (build `./agent`, volumes `chroma_data`, `agent_profiles`, `logs`). Publication agent : **`${API_PORT:-8546}:8000`**. Variables : **`.env`** racine (MySQL, `API_PORT` si pas d’import depuis `agent/.env`) et **`agent/.env`** (clés LLM, etc.) ; pour résoudre `API_PORT` depuis `agent/.env` : `docker compose --env-file .env --env-file agent/.env up`.
-- **[`docker-compose.agent.dev.yml`](../docker-compose.agent.dev.yml)** : surcharge du service `agent` — montage `./agent/app`, `run.py`, `uvicorn … --reload`.
+- **[`docker-compose.dev.yml`](../docker-compose.dev.yml)** : développement — montages hot reload pour `backend`, `frontend` et `agent` (Nest `start:dev`, Vite, `uvicorn --reload`).
 
 ## Control Plane — backend (`saas/backend`)
 

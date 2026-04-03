@@ -4,8 +4,8 @@
 #
 #   docker compose up --build
 #
-# Dev agent avec reload Python :
-#   docker compose --env-file .env --env-file agent/.env -f docker-compose.yml -f docker-compose.agent.dev.yml up --build
+# Dev (hot reload : Nest + Vite + agent) :
+#   docker compose --env-file .env --env-file agent/.env -f docker-compose.yml -f docker-compose.dev.yml up -d [--build]
 
 services:
   mysql:
@@ -14,9 +14,13 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD in .env}
       MYSQL_DATABASE: ${DB_NAME:-synapse_control}
+      # Utilisateur applicatif + phpMyAdmin (image MySQL : droits sur MYSQL_DATABASE)
+      MYSQL_USER: ${PHPMYADMIN_USER:-moez}
+      MYSQL_PASSWORD: ${PHPMYADMIN_PASSWORD:-moez}
     ports:
       - "${MYSQL_PORT:-3306}:3306"
     volumes:
+      # Volume nommé Docker : données MySQL persistées sur l’hôte (survit aux stop/start du conteneur)
       - mysql_data:/var/lib/mysql
     healthcheck:
       test:
@@ -35,8 +39,7 @@ services:
     environment:
       PMA_HOST: mysql
       PMA_PORT: 3306
-      PMA_USER: root
-      PMA_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD in .env}
+      # Pas de PMA_USER/PMA_PASSWORD : page de connexion (sinon connexion auto = erreur si user MySQL inexistant)
     ports:
       - "${PHPMYADMIN_PORT:-8550}:80"
     depends_on:
@@ -91,6 +94,7 @@ services:
       - logs:/data/logs
 
 volumes:
+  # mysql_data : stockage persistant (ne pas supprimer sauf reset voulu — `docker compose down -v` efface les volumes)
   mysql_data:
   chroma_data:
   agent_profiles:

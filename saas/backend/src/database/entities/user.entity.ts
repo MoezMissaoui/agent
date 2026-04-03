@@ -20,6 +20,18 @@ export class User {
   @Column()
   password: string;
 
+  /** SHA-256 hex du token brut (mot de passe oublié) */
+  @Column({
+    name: 'password_reset_token_hash',
+    type: 'varchar',
+    length: 64,
+    nullable: true,
+  })
+  passwordResetTokenHash: string | null;
+
+  @Column({ name: 'password_reset_expires', type: 'datetime', nullable: true })
+  passwordResetExpires: Date | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
