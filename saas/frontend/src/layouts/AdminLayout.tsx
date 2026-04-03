@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, NavLink, Outlet } from 'react-router-dom';
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { ThemeToggle } from '../components/ui/ThemeToggle';
 import { useAuth } from '../hooks/useAuth';
@@ -66,6 +66,7 @@ const navIcon = [IconDashboard, IconUsers, IconKey, IconSettings] as const;
 export function AdminLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, logout } = useAuth();
+  const { pathname } = useLocation();
 
   return (
     <div className="flex min-h-[100dvh] bg-surface dark:bg-surface-dark">
@@ -79,11 +80,12 @@ export function AdminLayout() {
       ) : null}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-slate-200/90 bg-white transition-transform dark:border-slate-700/80 dark:bg-slate-900 md:static md:z-0 md:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col transition-transform md:static md:z-0 md:translate-x-0 ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         }`}
       >
-        <div className="flex h-14 items-center justify-between gap-2 border-b border-slate-200/90 px-4 dark:border-slate-700/80 md:h-16 md:px-5">
+        <div className="admin-sidebar-enter flex h-full w-full flex-col border-r border-slate-200/90 bg-white dark:border-slate-700/80 dark:bg-slate-900">
+          <div className="flex h-14 items-center justify-between gap-2 border-b border-slate-200/90 px-4 dark:border-slate-700/80 md:h-16 md:px-5">
           <Link
             to="/admin"
             className="flex min-w-0 items-center gap-2 text-primary transition hover:opacity-90"
@@ -134,11 +136,12 @@ export function AdminLayout() {
           <Button type="button" variant="ghost" className="mt-2 w-full justify-center" onClick={() => logout()}>
             Sign out
           </Button>
+          </div>
         </div>
       </aside>
 
       <div className="flex min-h-[100dvh] min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between gap-4 border-b border-slate-200/90 bg-white/90 px-4 backdrop-blur dark:border-slate-700/80 dark:bg-slate-900/90 md:h-16 md:px-6">
+        <header className="sticky top-0 z-30 flex h-14 shrink-0 animate-admin-topbar items-center justify-between gap-4 border-b border-slate-200/90 bg-white/90 px-4 backdrop-blur dark:border-slate-700/80 dark:bg-slate-900/90 md:h-16 md:px-6">
           <div className="flex min-w-0 items-center gap-3">
             <button
               type="button"
@@ -156,7 +159,9 @@ export function AdminLayout() {
         </header>
 
         <main className="flex-1 overflow-auto p-4 md:p-6">
-          <Outlet />
+          <div key={pathname} className="animate-admin-content">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

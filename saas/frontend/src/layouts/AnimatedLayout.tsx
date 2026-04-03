@@ -6,17 +6,23 @@ function useSkipFirstRouteEnterAnimation() {
   return !key || key.toLowerCase() === 'default';
 }
 
-/** Transition de route en CSS (`animation-fill-mode: both` → pas de flash avant l’anim). */
+/** Même clé pour tout `/admin/*` pour ne pas remonter le shell à chaque sous-page. */
+function routeTransitionKey(pathname: string) {
+  if (pathname.startsWith('/admin')) return '/admin';
+  return pathname;
+}
+
+/** Transition de route — désactivée sous `/admin` (animations dans AdminLayout). */
 export function AnimatedLayout() {
   const location = useLocation();
   const skipEnter = useSkipFirstRouteEnterAnimation();
+  const isAdmin = location.pathname.startsWith('/admin');
+  const animatePage = !skipEnter && !isAdmin;
 
   return (
     <div
-      key={location.pathname}
-      className={
-        skipEnter ? 'min-h-[100dvh]' : 'min-h-[100dvh] animate-page-enter'
-      }
+      key={routeTransitionKey(location.pathname)}
+      className={animatePage ? 'min-h-[100dvh] animate-page-enter' : 'min-h-[100dvh]'}
     >
       <Outlet />
     </div>
