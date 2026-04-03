@@ -62,6 +62,16 @@ function IconSettings(props: { className?: string }) {
 
 const navIcon = [IconDashboard, IconUsers, IconKey, IconSettings] as const;
 
+const SIDEBAR_COLLAPSED_KEY = 'synapse-admin-sidebar-collapsed';
+
+function readSidebarCollapsed(): boolean {
+  try {
+    return typeof localStorage !== 'undefined' && localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
 function IconChevronDown(props: { className?: string }) {
   return (
     <svg className={props.className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -70,8 +80,29 @@ function IconChevronDown(props: { className?: string }) {
   );
 }
 
+/** Bascule replier / déplier la sidebar (desktop). */
+function IconSidebarToggle(props: { collapsed: boolean; className?: string }) {
+  return (
+    <svg
+      className={`${props.className ?? ''} transition-transform duration-200 ${props.collapsed ? 'rotate-180' : ''}`}
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M15 6l-6 6 6 6" />
+    </svg>
+  );
+}
+
 export function AdminLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => readSidebarCollapsed());
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
   const { user, logout } = useAuth();
@@ -89,6 +120,14 @@ export function AdminLayout() {
     }
   }, [profileOpen]);
 
+  useEffect(() => {
+    try {
+      localStorage.setItem(SIDEBAR_COLLAPSED_KEY, sidebarCollapsed ? '1' : '0');
+    } catch {
+      /* ignore */
+    }
+  }, [sidebarCollapsed]);
+
   return (
     <div className="flex min-h-[100dvh] bg-surface dark:bg-surface-dark">
       {mobileOpen ? (
@@ -101,55 +140,81 @@ export function AdminLayout() {
       ) : null}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col transition-transform md:static md:z-0 md:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col transition-[transform,width] duration-200 md:static md:z-0 md:translate-x-0 ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
-        }`}
+        } ${sidebarCollapsed ? 'md:w-[4.5rem]' : 'md:w-64'}`}
       >
-        <div className="admin-sidebar-enter flex h-full w-full flex-col border-r border-slate-200/90 bg-white dark:border-slate-700/80 dark:bg-slate-900">
-          <div className="flex h-14 items-center justify-between gap-2 border-b border-slate-200/90 px-4 dark:border-slate-700/80 md:h-16 md:px-5">
-          <Link
-            to="/admin"
-            className="flex min-w-0 items-center gap-2 text-primary transition hover:opacity-90"
-            onClick={() => setMobileOpen(false)}
+        <div className="admin-sidebar-enter flex h-full w-full min-w-0 flex-col border-r border-slate-200/90 bg-white dark:border-slate-700/80 dark:bg-slate-900">
+          <div
+            className={`flex h-14 shrink-0 items-center gap-2 border-b border-slate-200/90 px-4 dark:border-slate-700/80 md:h-16 ${
+              sidebarCollapsed ? 'justify-between md:justify-center md:px-2' : 'justify-between md:px-5'
+            }`}
           >
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-sm font-bold text-primary dark:bg-primary/20">
-              {appInitial}
-            </span>
-            <span className="truncate text-lg font-semibold tracking-tight text-slate-900 dark:text-white">{appName}</span>
-          </Link>
+            <Link
+              to="/admin"
+              className={`flex min-w-0 items-center gap-2 text-primary transition hover:opacity-90 ${
+                sidebarCollapsed ? 'md:justify-center' : ''
+              }`}
+              onClick={() => setMobileOpen(false)}
+              title={sidebarCollapsed ? appName : undefined}
+            >
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-sm font-bold text-primary dark:bg-primary/20">
+                {appInitial}
+              </span>
+              <span
+                className={`truncate text-lg font-semibold tracking-tight text-slate-900 dark:text-white ${
+                  sidebarCollapsed ? 'md:hidden' : ''
+                }`}
+              >
+                {appName}
+              </span>
+            </Link>
+            <button
+              type="button"
+              className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 md:hidden"
+              aria-label="Fermer"
+              onClick={() => setMobileOpen(false)}
+            >
+              <IconX />
+            </button>
+          </div>
+
+          <nav className="flex-1 space-y-1 overflow-y-auto overflow-x-hidden p-3">
+            {navItems.map((item, i) => {
+              const Icon = navIcon[i];
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={'end' in item ? item.end : false}
+                  title={sidebarCollapsed ? item.label : undefined}
+                  onClick={() => setMobileOpen(false)}
+                  className={({ isActive }) =>
+                    `flex items-center gap-2 rounded-xl py-2.5 text-sm font-medium transition ${
+                      sidebarCollapsed ? 'md:justify-center md:px-2' : 'px-3'
+                    } ${
+                      isActive
+                        ? 'bg-primary/10 text-primary dark:bg-primary/20'
+                        : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800/80'
+                    }`
+                  }
+                >
+                  <Icon className="size-5 shrink-0 opacity-90" />
+                  <span className={sidebarCollapsed ? 'md:sr-only' : ''}>{item.label}</span>
+                </NavLink>
+              );
+            })}
+          </nav>
+
           <button
             type="button"
-            className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 md:hidden"
-            aria-label="Fermer"
-            onClick={() => setMobileOpen(false)}
+            className="hidden shrink-0 items-center justify-center border-t border-slate-200/90 py-3 text-slate-500 transition hover:bg-slate-50 dark:border-slate-700/80 dark:text-slate-400 dark:hover:bg-slate-800/80 md:flex"
+            aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            onClick={() => setSidebarCollapsed((c) => !c)}
           >
-            <IconX />
+            <IconSidebarToggle collapsed={sidebarCollapsed} className="text-slate-600 dark:text-slate-300" />
           </button>
-        </div>
-
-        <nav className="flex-1 space-y-1 overflow-y-auto p-3">
-          {navItems.map((item, i) => {
-            const Icon = navIcon[i];
-            return (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={'end' in item ? item.end : false}
-                onClick={() => setMobileOpen(false)}
-                className={({ isActive }) =>
-                  `flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
-                    isActive
-                      ? 'bg-primary/10 text-primary dark:bg-primary/20'
-                      : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800/80'
-                  }`
-                }
-              >
-                <Icon className="size-5 shrink-0 opacity-90" />
-                {item.label}
-              </NavLink>
-            );
-          })}
-        </nav>
         </div>
       </aside>
 
