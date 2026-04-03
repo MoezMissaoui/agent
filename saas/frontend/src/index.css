@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+/** Durée / courbe communes : auth (`animate-page-enter`) + control panel admin. Modifier ici uniquement. */
+:root {
+  --motion-duration: 1s;
+  --motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 @layer base {
   body {
     margin: 0;
@@ -28,7 +34,7 @@
 
 @layer utilities {
   .animate-page-enter {
-    animation: page-enter 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation: page-enter var(--motion-duration) var(--motion-ease) both;
   }
 }
 
@@ -75,17 +81,17 @@
 
 @layer utilities {
   .animate-admin-topbar {
-    animation: admin-topbar-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation: admin-topbar-in var(--motion-duration) var(--motion-ease) both;
   }
 
   .animate-admin-content {
-    animation: admin-content-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation: admin-content-in var(--motion-duration) var(--motion-ease) both;
   }
 }
 
 @media (min-width: 768px) {
   .admin-sidebar-enter {
-    animation: admin-sidebar-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation: admin-sidebar-in var(--motion-duration) var(--motion-ease) both;
   }
 }
 
