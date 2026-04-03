@@ -10,12 +10,14 @@ export function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [done, setDone] = useState(false);
+  const [mailDelivery, setMailDelivery] = useState<'email' | 'dev_log' | undefined>();
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError('');
     try {
-      await forgotPasswordRequest(email);
+      const res = await forgotPasswordRequest(email);
+      setMailDelivery(res.mailDelivery);
       setDone(true);
     } catch (err) {
       setError(getRequestErrorMessage(err));
@@ -25,6 +27,16 @@ export function ForgotPasswordPage() {
   if (done) {
     return (
       <AuthLayout title="Check your email" subtitle="If an account exists, we sent a reset link.">
+        {mailDelivery === 'dev_log' ? (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-950">
+            <p className="font-medium">Development mode (no real email)</p>
+            <p className="mt-1 text-amber-900/90">
+              The reset link is only written to the <strong>backend server logs</strong>, not to your inbox.
+              Check the terminal where Nest runs, or run:{' '}
+              <code className="rounded bg-amber-100/80 px-1 py-0.5 text-xs">docker compose logs -f backend</code>
+            </p>
+          </div>
+        ) : null}
         <p className="text-center text-sm text-slate-600">
           You can close this page or{' '}
           <Link to="/login" className="font-medium text-primary hover:underline">

@@ -51,6 +51,8 @@ services:
       context: ./saas/backend
       dockerfile: Dockerfile
     restart: unless-stopped
+    env_file:
+      - ./saas/backend/.env
     environment:
       PORT: "8547"
       NODE_ENV: development

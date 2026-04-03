@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -16,7 +17,7 @@ import { LoginDto } from './dto/login.dto';
 import { RefreshDto } from './dto/refresh.dto';
 import { RegisterDto } from './dto/register.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
-import { MailService } from './mail/mail.service';
+import { MailService, shouldUseSmtpMail } from './mail/mail.service';
 
 const BCRYPT_ROUNDS = 10;
 
@@ -84,13 +85,12 @@ export class AuthService {
     const user = await this.users.findOne({
       where: { email: dto.email.toLowerCase() },
     });
-    const generic = {
-      message:
-        'If an account exists for this email, a reset link has been sent.',
-    };
     if (!user) {
-      return generic;
+      throw new NotFoundException('No account is registered with this email address.');
     }
+    const generic = {
+      message: 'A reset link has been sent to your email.',
+    };
     const rawToken = randomBytes(32).toString('hex');
     const tokenHash = createHash('sha256').update(rawToken).digest('hex');
     const ttl = parseInt(
@@ -106,7 +106,13 @@ export class AuthService {
       .replace(/\/$/, '');
     const resetUrl = `${base}/reset-password?token=${rawToken}`;
     await this.mail.sendPasswordResetLink(user.email, resetUrl);
-    return generic;
+    const smtpConfigured = shouldUseSmtpMail(this.config);
+    return {
+      ...generic,
+      ...(smtpConfigured
+        ? { mailDelivery: 'email' as const }
+        : { mailDelivery: 'dev_log' as const }),
+    };
   }
 
   async resetPassword(dto: ResetPasswordDto) {

@@ -35,8 +35,13 @@ export async function refreshRequest(refreshToken: string): Promise<TokenRespons
   return data;
 }
 
-export async function forgotPasswordRequest(email: string): Promise<{ message: string }> {
-  const { data } = await api.post<{ message: string }>(`${base}/forgot-password`, { email });
+export type ForgotPasswordResponse = {
+  message: string;
+  mailDelivery?: 'email' | 'dev_log';
+};
+
+export async function forgotPasswordRequest(email: string): Promise<ForgotPasswordResponse> {
+  const { data } = await api.post<ForgotPasswordResponse>(`${base}/forgot-password`, { email });
   return data;
 }
 

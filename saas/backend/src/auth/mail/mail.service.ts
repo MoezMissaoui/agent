@@ -75,15 +75,20 @@ export class SmtpMailService extends MailService {
   }
 }
 
-/** Choisit SMTP si MAIL_MAILER=smtp et les champs obligatoires sont présents, sinon log dev. */
-export function createMailService(config: ConfigService): MailService {
-  const mailer = (
-    config.get<string>('MAIL_MAILER', 'dev') || 'dev'
-  ).toLowerCase();
+/** SMTP actif si identifiants complets ; MAIL_MAILER=log force le log console uniquement. */
+export function shouldUseSmtpMail(config: ConfigService): boolean {
+  if ((config.get<string>('MAIL_MAILER', '') || '').toLowerCase() === 'log') {
+    return false;
+  }
   const host = config.get<string>('MAIL_HOST', '');
   const user = config.get<string>('MAIL_USERNAME', '');
   const pass = config.get<string>('MAIL_PASSWORD', '');
-  if (mailer === 'smtp' && host && user && pass) {
+  return Boolean(host && user && pass);
+}
+
+/** SMTP dès que les identifiants sont renseignés (y compris en dev) ; sinon log console. */
+export function createMailService(config: ConfigService): MailService {
+  if (shouldUseSmtpMail(config)) {
     return new SmtpMailService(config);
   }
   return new DevMailService(config);
