@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { PasswordInput } from '../components/ui/PasswordInput';
+import { AnimatedNotice } from '../components/ui/AnimatedNotice';
 import { AuthLayout } from '../layouts/AuthLayout';
 import { getRequestErrorMessage } from '../lib/errors';
 
@@ -33,11 +34,9 @@ export function LoginPage() {
   return (
     <AuthLayout title="Sign in" subtitle="Welcome back to Synapse Control Plane">
       <form onSubmit={onSubmit} className="flex flex-col gap-5">
-        {error ? (
-          <div className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-300">
-            {error}
-          </div>
-        ) : null}
+        <AnimatedNotice show={Boolean(error)} variant="error" contentKey={error}>
+          {error}
+        </AnimatedNotice>
         <Input
           label="Email"
           name="email"

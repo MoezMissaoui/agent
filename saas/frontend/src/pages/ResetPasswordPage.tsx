@@ -2,6 +2,7 @@ import { type FormEvent, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { resetPasswordRequest } from '../api/auth';
 import { Button } from '../components/ui/Button';
+import { AnimatedNotice } from '../components/ui/AnimatedNotice';
 import { PasswordInput } from '../components/ui/PasswordInput';
 import { AuthLayout } from '../layouts/AuthLayout';
 import { getRequestErrorMessage } from '../lib/errors';
@@ -51,16 +52,12 @@ export function ResetPasswordPage() {
   return (
     <AuthLayout title="New password" subtitle="Choose a strong password">
       <form onSubmit={onSubmit} className="flex flex-col gap-5">
-        {tokenMissing ? (
-          <div className="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
-            Missing token in URL. Open the link from your email.
-          </div>
-        ) : null}
-        {error ? (
-          <div className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-300">
-            {error}
-          </div>
-        ) : null}
+        <AnimatedNotice show={tokenMissing} variant="warning" contentKey="missing-token">
+          Missing token in URL. Open the link from your email.
+        </AnimatedNotice>
+        <AnimatedNotice show={Boolean(error)} variant="error" contentKey={error}>
+          {error}
+        </AnimatedNotice>
         <PasswordInput
           label="New password"
           name="password"

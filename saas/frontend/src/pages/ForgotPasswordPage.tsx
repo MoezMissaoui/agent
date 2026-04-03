@@ -1,6 +1,7 @@
 import { type FormEvent, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { forgotPasswordRequest } from '../api/auth';
+import { AnimatedNotice } from '../components/ui/AnimatedNotice';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { AuthLayout } from '../layouts/AuthLayout';
@@ -27,18 +28,16 @@ export function ForgotPasswordPage() {
   if (done) {
     return (
       <AuthLayout title="Check your email" subtitle="We sent a reset link to your inbox.">
-        {mailDelivery === 'dev_log' ? (
-          <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
-            <p className="font-medium">Development mode (no real email)</p>
-            <p className="mt-1 text-amber-900/90 dark:text-amber-200/90">
-              The reset link is only written to the <strong>backend server logs</strong>, not to your inbox.
-              Check the terminal where Nest runs, or run:{' '}
-              <code className="rounded bg-amber-100/80 px-1 py-0.5 text-xs dark:bg-amber-900/80">
-                docker compose logs -f backend
-              </code>
-            </p>
-          </div>
-        ) : null}
+        <AnimatedNotice show={mailDelivery === 'dev_log'} variant="warning" contentKey="dev-log">
+          <p className="font-medium">Development mode (no real email)</p>
+          <p className="mt-1 text-amber-900/90 dark:text-amber-200/90">
+            The reset link is only written to the <strong>backend server logs</strong>, not to your inbox. Check the
+            terminal where Nest runs, or run:{' '}
+            <code className="rounded bg-amber-100/80 px-1 py-0.5 text-xs dark:bg-amber-900/80">
+              docker compose logs -f backend
+            </code>
+          </p>
+        </AnimatedNotice>
         <p className="text-center text-sm text-slate-600 dark:text-slate-400">
           You can close this page or{' '}
           <Link to="/login" className="font-medium text-primary hover:underline">
@@ -53,11 +52,9 @@ export function ForgotPasswordPage() {
   return (
     <AuthLayout title="Forgot password" subtitle="We will email you a reset link">
       <form onSubmit={onSubmit} className="flex flex-col gap-5">
-        {error ? (
-          <div className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-300">
-            {error}
-          </div>
-        ) : null}
+        <AnimatedNotice show={Boolean(error)} variant="error" contentKey={error}>
+          {error}
+        </AnimatedNotice>
         <Input
           label="Email"
           name="email"
