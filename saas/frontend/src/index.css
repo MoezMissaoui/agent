@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  margin: 0;
+@layer base {
+  body {
+    margin: 0;
+    @apply bg-surface text-slate-900 transition-colors duration-200 dark:bg-surface-dark dark:text-slate-100;
+  }
 }

@@ -11,26 +11,26 @@ export function PasswordInput({ label, error, id, className = '', ...rest }: Pro
 
   return (
     <div className="w-full">
-      <label htmlFor={inputId} className="mb-1.5 block text-sm font-medium text-slate-700">
+      <label htmlFor={inputId} className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
         {label}
       </label>
       <div className="relative">
         <input
           id={inputId}
           type={visible ? 'text' : 'password'}
-          className={`w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-3 pr-11 text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/25 ${className}`}
+          className={`w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-3 pr-11 text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/25 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 ${className}`}
           {...rest}
         />
         <button
           type="button"
           onClick={() => setVisible((v) => !v)}
-          className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-lg border-0 bg-transparent p-1.5 text-slate-500 outline-none ring-0 hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+          className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-lg border-0 bg-transparent p-1.5 text-slate-500 outline-none ring-0 hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
           aria-label={visible ? 'Hide password' : 'Show password'}
         >
           {visible ? <EyeSlashIcon /> : <EyeIcon />}
         </button>
       </div>
-      {error ? <p className="mt-1 text-sm text-red-600">{error}</p> : null}
+      {error ? <p className="mt-1 text-sm text-red-600 dark:text-red-400">{error}</p> : null}
     </div>
   );
 }

@@ -42,7 +42,9 @@ export function RegisterPage() {
     <AuthLayout title="Create account" subtitle="Start with the Control Plane">
       <form onSubmit={onSubmit} className="flex flex-col gap-5">
         {error ? (
-          <div className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
+          <div className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-300">
+            {error}
+          </div>
         ) : null}
         <Input
           label="Email"
@@ -73,7 +75,7 @@ export function RegisterPage() {
         <Button type="submit" className="w-full">
           Register
         </Button>
-        <p className="text-center text-sm text-slate-600">
+        <p className="text-center text-sm text-slate-600 dark:text-slate-400">
           Already have an account?{' '}
           <Link to="/login" className="font-medium text-primary hover:underline">
             Sign in

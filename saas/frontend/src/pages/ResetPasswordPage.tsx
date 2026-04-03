@@ -52,12 +52,14 @@ export function ResetPasswordPage() {
     <AuthLayout title="New password" subtitle="Choose a strong password">
       <form onSubmit={onSubmit} className="flex flex-col gap-5">
         {tokenMissing ? (
-          <div className="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          <div className="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
             Missing token in URL. Open the link from your email.
           </div>
         ) : null}
         {error ? (
-          <div className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
+          <div className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-300">
+            {error}
+          </div>
         ) : null}
         <PasswordInput
           label="New password"
@@ -79,7 +81,7 @@ export function ResetPasswordPage() {
         <Button type="submit" className="w-full" disabled={tokenMissing}>
           Update password
         </Button>
-        <p className="text-center text-sm text-slate-600">
+        <p className="text-center text-sm text-slate-600 dark:text-slate-400">
           <Link to="/login" className="text-primary hover:underline">
             Back to sign in
           </Link>

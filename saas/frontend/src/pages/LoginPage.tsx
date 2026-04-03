@@ -34,7 +34,9 @@ export function LoginPage() {
     <AuthLayout title="Sign in" subtitle="Welcome back to Synapse Control Plane">
       <form onSubmit={onSubmit} className="flex flex-col gap-5">
         {error ? (
-          <div className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
+          <div className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-300">
+            {error}
+          </div>
         ) : null}
         <Input
           label="Email"
@@ -53,19 +55,19 @@ export function LoginPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-600">
+        <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
           <input
             type="checkbox"
             checked={rememberMe}
             onChange={(e) => setRememberMe(e.target.checked)}
-            className="size-4 rounded border-slate-300 text-primary focus:ring-primary"
+            className="size-4 rounded border-slate-300 text-primary focus:ring-primary dark:border-slate-600 dark:bg-slate-900"
           />
           Remember me
         </label>
         <Button type="submit" className="w-full">
           Sign in
         </Button>
-        <div className="flex flex-col gap-2 text-center text-sm text-slate-600">
+        <div className="flex flex-col gap-2 text-center text-sm text-slate-600 dark:text-slate-400">
           <Link to="/forgot-password" className="text-primary hover:underline">
             Forgot password?
           </Link>
