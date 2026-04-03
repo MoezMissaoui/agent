@@ -1,11 +1,11 @@
 import { type FormEvent, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { forgotPasswordRequest } from '../api/auth';
-import { AnimatedNotice } from '../components/ui/AnimatedNotice';
-import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
-import { AuthLayout } from '../layouts/AuthLayout';
-import { getRequestErrorMessage } from '../lib/errors';
+import { forgotPasswordRequest } from '../../api/auth';
+import { AnimatedNotice } from '../../components/ui/AnimatedNotice';
+import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
+import { AuthLayout } from '../../layouts/AuthLayout';
+import { getRequestErrorMessage } from '../../lib/errors';
 
 export function ForgotPasswordPage() {
   const [email, setEmail] = useState('');

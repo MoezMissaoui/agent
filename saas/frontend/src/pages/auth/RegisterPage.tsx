@@ -1,12 +1,12 @@
 import { type FormEvent, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
-import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
-import { PasswordInput } from '../components/ui/PasswordInput';
-import { AnimatedNotice } from '../components/ui/AnimatedNotice';
-import { AuthLayout } from '../layouts/AuthLayout';
-import { getRequestErrorMessage } from '../lib/errors';
+import { useAuth } from '../../hooks/useAuth';
+import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
+import { PasswordInput } from '../../components/ui/PasswordInput';
+import { AnimatedNotice } from '../../components/ui/AnimatedNotice';
+import { AuthLayout } from '../../layouts/AuthLayout';
+import { getRequestErrorMessage } from '../../lib/errors';
 
 export function RegisterPage() {
   const navigate = useNavigate();

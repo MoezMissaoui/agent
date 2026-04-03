@@ -1,11 +1,11 @@
 import { type FormEvent, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { resetPasswordRequest } from '../api/auth';
-import { Button } from '../components/ui/Button';
-import { AnimatedNotice } from '../components/ui/AnimatedNotice';
-import { PasswordInput } from '../components/ui/PasswordInput';
-import { AuthLayout } from '../layouts/AuthLayout';
-import { getRequestErrorMessage } from '../lib/errors';
+import { resetPasswordRequest } from '../../api/auth';
+import { Button } from '../../components/ui/Button';
+import { AnimatedNotice } from '../../components/ui/AnimatedNotice';
+import { PasswordInput } from '../../components/ui/PasswordInput';
+import { AuthLayout } from '../../layouts/AuthLayout';
+import { getRequestErrorMessage } from '../../lib/errors';
 
 export function ResetPasswordPage() {
   const [search] = useSearchParams();

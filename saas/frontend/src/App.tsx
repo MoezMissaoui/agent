@@ -4,10 +4,10 @@ import { AdminLayout } from './layouts/AdminLayout';
 import { AnimatedLayout } from './layouts/AnimatedLayout';
 import { AdminHomePage } from './pages/admin/AdminHomePage';
 import { AdminPlaceholderPage } from './pages/admin/AdminPlaceholderPage';
-import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
-import { LoginPage } from './pages/LoginPage';
-import { RegisterPage } from './pages/RegisterPage';
-import { ResetPasswordPage } from './pages/ResetPasswordPage';
+import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage';
+import { LoginPage } from './pages/auth/LoginPage';
+import { RegisterPage } from './pages/auth/RegisterPage';
+import { ResetPasswordPage } from './pages/auth/ResetPasswordPage';
 import { RequireAuth } from './routes/RequireAuth';
 import { RootRedirect } from './routes/RootRedirect';
 
