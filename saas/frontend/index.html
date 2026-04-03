@@ -11,10 +11,8 @@
     <script>
       (function () {
         var t = localStorage.getItem('synapse-theme');
-        if (t === 'dark') document.documentElement.classList.add('dark');
-        else if (t === 'light') document.documentElement.classList.remove('dark');
-        else if (window.matchMedia('(prefers-color-scheme: dark)').matches)
-          document.documentElement.classList.add('dark');
+        if (t === 'light') document.documentElement.classList.remove('dark');
+        else document.documentElement.classList.add('dark');
       })();
     </script>
   </head>
