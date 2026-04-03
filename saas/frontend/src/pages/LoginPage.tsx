@@ -17,7 +17,7 @@ export function LoginPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (user) navigate('/', { replace: true });
+    if (user) navigate('/admin', { replace: true });
   }, [user, navigate]);
 
   async function onSubmit(e: FormEvent) {
@@ -25,7 +25,7 @@ export function LoginPage() {
     setError('');
     try {
       await login(email, password, rememberMe);
-      navigate('/');
+      navigate('/admin');
     } catch (err) {
       setError(getRequestErrorMessage(err));
     }

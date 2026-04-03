@@ -1,12 +1,15 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './context/AuthProvider';
+import { AdminLayout } from './layouts/AdminLayout';
 import { AnimatedLayout } from './layouts/AnimatedLayout';
+import { AdminHomePage } from './pages/admin/AdminHomePage';
+import { AdminPlaceholderPage } from './pages/admin/AdminPlaceholderPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
-import { HomePage } from './pages/HomePage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { RequireAuth } from './routes/RequireAuth';
+import { RootRedirect } from './routes/RootRedirect';
 
 function App() {
   return (
@@ -18,14 +21,29 @@ function App() {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/" element={<RootRedirect />} />
             <Route
-              path="/"
+              path="/admin"
               element={
                 <RequireAuth>
-                  <HomePage />
+                  <AdminLayout />
                 </RequireAuth>
               }
-            />
+            >
+              <Route index element={<AdminHomePage />} />
+              <Route
+                path="users"
+                element={<AdminPlaceholderPage title="Users" description="Manage accounts, roles, and invitations." />}
+              />
+              <Route
+                path="api-keys"
+                element={<AdminPlaceholderPage title="API keys" description="Create and rotate API keys for integrations." />}
+              />
+              <Route
+                path="settings"
+                element={<AdminPlaceholderPage title="Settings" description="Workspace and security preferences." />}
+              />
+            </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>

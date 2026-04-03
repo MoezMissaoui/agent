@@ -1,0 +1,164 @@
+import { useState } from 'react';
+import { Link, NavLink, Outlet } from 'react-router-dom';
+import { Button } from '../components/ui/Button';
+import { ThemeToggle } from '../components/ui/ThemeToggle';
+import { useAuth } from '../hooks/useAuth';
+import { appInitial, appName } from '../lib/brand';
+
+const navItems = [
+  { to: '/admin', end: true, label: 'Dashboard' },
+  { to: '/admin/users', label: 'Users' },
+  { to: '/admin/api-keys', label: 'API keys' },
+  { to: '/admin/settings', label: 'Settings' },
+] as const;
+
+function IconMenu(props: { className?: string }) {
+  return (
+    <svg className={props.className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <path d="M4 6h16M4 12h16M4 18h16" />
+    </svg>
+  );
+}
+
+function IconX(props: { className?: string }) {
+  return (
+    <svg className={props.className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <path d="M18 6L6 18M6 6l12 12" />
+    </svg>
+  );
+}
+
+function IconDashboard(props: { className?: string }) {
+  return (
+    <svg className={props.className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M4 5a1 1 0 011-1h4a1 1 0 011 1v5a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 13a1 1 0 011-1h4a1 1 0 011 1v6a1 1 0 01-1 1h-4a1 1 0 01-1-1v-6z" />
+    </svg>
+  );
+}
+
+function IconUsers(props: { className?: string }) {
+  return (
+    <svg className={props.className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
+    </svg>
+  );
+}
+
+function IconKey(props: { className?: string }) {
+  return (
+    <svg className={props.className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
+    </svg>
+  );
+}
+
+function IconSettings(props: { className?: string }) {
+  return (
+    <svg className={props.className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M12 15a3 3 0 100-6 3 3 0 000 6z" />
+      <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
+    </svg>
+  );
+}
+
+const navIcon = [IconDashboard, IconUsers, IconKey, IconSettings] as const;
+
+export function AdminLayout() {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const { user, logout } = useAuth();
+
+  return (
+    <div className="flex min-h-[100dvh] bg-surface dark:bg-surface-dark">
+      {mobileOpen ? (
+        <button
+          type="button"
+          aria-label="Fermer le menu"
+          className="fixed inset-0 z-40 bg-black/40 md:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      ) : null}
+
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-slate-200/90 bg-white transition-transform dark:border-slate-700/80 dark:bg-slate-900 md:static md:z-0 md:translate-x-0 ${
+          mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        }`}
+      >
+        <div className="flex h-14 items-center justify-between gap-2 border-b border-slate-200/90 px-4 dark:border-slate-700/80 md:h-16 md:px-5">
+          <Link
+            to="/admin"
+            className="flex min-w-0 items-center gap-2 text-primary transition hover:opacity-90"
+            onClick={() => setMobileOpen(false)}
+          >
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-sm font-bold text-primary dark:bg-primary/20">
+              {appInitial}
+            </span>
+            <span className="truncate text-lg font-semibold tracking-tight text-slate-900 dark:text-white">{appName}</span>
+          </Link>
+          <button
+            type="button"
+            className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 md:hidden"
+            aria-label="Fermer"
+            onClick={() => setMobileOpen(false)}
+          >
+            <IconX />
+          </button>
+        </div>
+
+        <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+          {navItems.map((item, i) => {
+            const Icon = navIcon[i];
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={'end' in item ? item.end : false}
+                onClick={() => setMobileOpen(false)}
+                className={({ isActive }) =>
+                  `flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
+                    isActive
+                      ? 'bg-primary/10 text-primary dark:bg-primary/20'
+                      : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800/80'
+                  }`
+                }
+              >
+                <Icon className="size-5 shrink-0 opacity-90" />
+                {item.label}
+              </NavLink>
+            );
+          })}
+        </nav>
+
+        <div className="border-t border-slate-200/90 p-3 dark:border-slate-700/80">
+          <p className="truncate px-1 text-xs text-slate-500 dark:text-slate-500">Signed in</p>
+          <p className="truncate px-1 text-sm font-medium text-slate-800 dark:text-slate-200">{user?.email}</p>
+          <Button type="button" variant="ghost" className="mt-2 w-full justify-center" onClick={() => logout()}>
+            Sign out
+          </Button>
+        </div>
+      </aside>
+
+      <div className="flex min-h-[100dvh] min-w-0 flex-1 flex-col">
+        <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between gap-4 border-b border-slate-200/90 bg-white/90 px-4 backdrop-blur dark:border-slate-700/80 dark:bg-slate-900/90 md:h-16 md:px-6">
+          <div className="flex min-w-0 items-center gap-3">
+            <button
+              type="button"
+              className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 md:hidden"
+              aria-label="Ouvrir le menu"
+              onClick={() => setMobileOpen(true)}
+            >
+              <IconMenu />
+            </button>
+            <span className="truncate text-sm font-semibold text-slate-900 dark:text-white">Control Plane</span>
+          </div>
+          <div className="flex shrink-0 items-center gap-1">
+            <ThemeToggle />
+          </div>
+        </header>
+
+        <main className="flex-1 overflow-auto p-4 md:p-6">
+          <Outlet />
+        </main>
+      </div>
+    </div>
+  );
+}

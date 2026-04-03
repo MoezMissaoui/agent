@@ -17,7 +17,7 @@ export function RegisterPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (user) navigate('/', { replace: true });
+    if (user) navigate('/admin', { replace: true });
   }, [user, navigate]);
 
   async function onSubmit(e: FormEvent) {
@@ -33,7 +33,7 @@ export function RegisterPage() {
     }
     try {
       await register(email, password);
-      navigate('/');
+      navigate('/admin');
     } catch (err) {
       setError(getRequestErrorMessage(err));
     }
