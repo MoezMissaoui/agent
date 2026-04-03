@@ -8,13 +8,52 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <title>Synapse — Control Plane</title>
+    <!-- Thème appliqué avant tout paint + fond immédiat (évite flash blanc au refresh, avant Tailwind) -->
     <script>
       (function () {
-        var t = localStorage.getItem('synapse-theme');
-        if (t === 'light') document.documentElement.classList.remove('dark');
-        else document.documentElement.classList.add('dark');
+        var key = 'synapse-theme';
+        var t = localStorage.getItem(key);
+        var root = document.documentElement;
+        var dark = t !== 'light';
+        if (dark) {
+          root.classList.add('dark');
+          root.style.colorScheme = 'dark';
+        } else {
+          root.classList.remove('dark');
+          root.style.colorScheme = 'light';
+        }
+        var bg = dark ? '#0b0e14' : '#f8f9fa';
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (!meta) {
+          meta = document.createElement('meta');
+          meta.setAttribute('name', 'theme-color');
+          document.head.appendChild(meta);
+        }
+        meta.setAttribute('content', bg);
       })();
     </script>
+    <style id="synapse-critical-theme">
+      html {
+        height: 100%;
+      }
+      html.dark,
+      html.dark body {
+        background-color: #0b0e14;
+        color: #f1f5f9;
+      }
+      html:not(.dark),
+      html:not(.dark) body {
+        background-color: #f8f9fa;
+        color: #0f172a;
+      }
+      body {
+        margin: 0;
+        min-height: 100%;
+      }
+      #root {
+        min-height: 100dvh;
+      }
+    </style>
   </head>
   <body class="antialiased">
     <div id="root"></div>
