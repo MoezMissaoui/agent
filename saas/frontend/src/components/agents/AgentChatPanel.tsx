@@ -1,0 +1,480 @@
+import { motion, AnimatePresence } from 'framer-motion';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  createChatSession,
+  getChatSessionMessages,
+  getChatStatus,
+  listChatSessions,
+  sendChatMessage,
+  type ChatMessage,
+  type ChatSessionSummary,
+} from '../../api/agentChat';
+import { getRequestErrorMessage } from '../../lib/errors';
+import { Button } from '../ui/Button';
+
+type Props = {
+  agentId: string;
+  refreshKey: number;
+  /** `modal` : remplit le conteneur parent (ex. modale plein écran). */
+  layout?: 'card' | 'modal';
+};
+
+function SendIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M3.478 2.404a.75.75 0 0 0-.731.807l.965 10.908a.75.75 0 0 0 1.206.58l2.07-1.58 2.748 2.748a.75.75 0 0 0 1.28-.53v-3.75l2.69-2.69a.75.75 0 0 0-.53-1.28H8.75l-1.58-2.07a.75.75 0 0 0-.58-1.206L3.48 2.405Z" />
+    </svg>
+  );
+}
+
+function UserBubbleIcon() {
+  return (
+    <div
+      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-200 text-slate-600 dark:bg-slate-600 dark:text-slate-200"
+      aria-hidden
+    >
+      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+      </svg>
+    </div>
+  );
+}
+
+function AssistantBubbleIcon() {
+  return (
+    <div
+      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary dark:bg-primary/25"
+      aria-hidden
+    >
+      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2M7.5 13A2.5 2.5 0 0 0 5 15.5 2.5 2.5 0 0 0 7.5 18a2.5 2.5 0 0 0 2.5-2.5A2.5 2.5 0 0 0 7.5 13m9 0a2.5 2.5 0 0 0-2.5 2.5 2.5 2.5 0 0 0 2.5 2.5 2.5 2.5 0 0 0 2.5-2.5 2.5 2.5 0 0 0-2.5-2.5z" />
+      </svg>
+    </div>
+  );
+}
+
+function TypingIndicator() {
+  return (
+    <div className="flex items-center gap-1 px-1 py-2" aria-live="polite" aria-label="L’assistant répond">
+      {[0, 1, 2].map((i) => (
+        <motion.span
+          key={i}
+          className="h-2 w-2 rounded-full bg-slate-400 dark:bg-slate-500"
+          animate={{ opacity: [0.35, 1, 0.35], y: [0, -3, 0] }}
+          transition={{
+            duration: 1,
+            repeat: Infinity,
+            delay: i * 0.15,
+            ease: 'easeInOut',
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) {
+  const isModal = layout === 'modal';
+  const shellGap = isModal ? 'mt-0' : 'mt-4';
+  const chatSize = isModal
+    ? 'min-h-0 flex-1 h-full max-h-none'
+    : 'min-h-[380px] max-h-[min(72vh,620px)]';
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [statusLoading, setStatusLoading] = useState(true);
+  const [chatEnabled, setChatEnabled] = useState(false);
+  const [statusError, setStatusError] = useState<string | null>(null);
+
+  const [sessions, setSessions] = useState<ChatSessionSummary[]>([]);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
+  const [sessionsError, setSessionsError] = useState<string | null>(null);
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messagesLoading, setMessagesLoading] = useState(false);
+  const [input, setInput] = useState('');
+  const [sending, setSending] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  const loadStatus = useCallback(async () => {
+    setStatusError(null);
+    setStatusLoading(true);
+    try {
+      const s = await getChatStatus(agentId);
+      setChatEnabled(s.chatEnabled);
+    } catch (e) {
+      setStatusError(getRequestErrorMessage(e));
+      setChatEnabled(false);
+    } finally {
+      setStatusLoading(false);
+    }
+  }, [agentId]);
+
+  const loadSessions = useCallback(async () => {
+    setSessionsError(null);
+    setSessionsLoading(true);
+    try {
+      const { sessions: list } = await listChatSessions(agentId);
+      setSessions(list);
+      setSelectedSessionId((prev) => {
+        if (prev && list.some((x) => x.sessionId === prev)) {
+          return prev;
+        }
+        return list[0]?.sessionId ?? null;
+      });
+    } catch (e) {
+      setSessionsError(getRequestErrorMessage(e));
+      setSessions([]);
+      setSelectedSessionId(null);
+    } finally {
+      setSessionsLoading(false);
+    }
+  }, [agentId]);
+
+  const loadMessages = useCallback(
+    async (sessionId: string) => {
+      setMessagesLoading(true);
+      setActionError(null);
+      try {
+        const { messages: rows } = await getChatSessionMessages(agentId, sessionId);
+        setMessages(rows);
+      } catch (e) {
+        setActionError(getRequestErrorMessage(e));
+        setMessages([]);
+      } finally {
+        setMessagesLoading(false);
+      }
+    },
+    [agentId],
+  );
+
+  useEffect(() => {
+    void loadStatus();
+  }, [agentId, refreshKey, loadStatus]);
+
+  useEffect(() => {
+    if (!chatEnabled) {
+      setSessions([]);
+      setSelectedSessionId(null);
+      setMessages([]);
+      return;
+    }
+    void loadSessions();
+  }, [agentId, chatEnabled, refreshKey, loadSessions]);
+
+  useEffect(() => {
+    if (!selectedSessionId) {
+      setMessages([]);
+      return;
+    }
+    void loadMessages(selectedSessionId);
+  }, [agentId, selectedSessionId, loadMessages]);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, messagesLoading, sending]);
+
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
+  }, [input]);
+
+  const onNewSession = async () => {
+    setActionError(null);
+    try {
+      const { sessionId } = await createChatSession(agentId);
+      setSelectedSessionId(sessionId);
+      setMessages([]);
+      await loadSessions();
+    } catch (e) {
+      setActionError(getRequestErrorMessage(e));
+    }
+  };
+
+  const submitMessage = async () => {
+    const text = input.trim();
+    if (!text || !selectedSessionId || sending) return;
+    setSending(true);
+    setActionError(null);
+    try {
+      const res = await sendChatMessage(agentId, selectedSessionId, text);
+      setInput('');
+      const now = new Date().toISOString();
+      setMessages((prev) => [
+        ...prev,
+        {
+          messageId: res.userMessageId,
+          role: 'USER',
+          content: text,
+          createdAt: now,
+        },
+        {
+          messageId: res.assistantMessageId,
+          role: 'ASSISTANT',
+          content: res.answer,
+          createdAt: now,
+        },
+      ]);
+      void loadSessions();
+    } catch (err) {
+      setActionError(getRequestErrorMessage(err));
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const onSend = (e: React.FormEvent) => {
+    e.preventDefault();
+    void submitMessage();
+  };
+
+  const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      void submitMessage();
+    }
+  };
+
+  const suggestionPick = (text: string) => {
+    setInput(text);
+    textareaRef.current?.focus();
+  };
+
+  if (statusLoading) {
+    return (
+      <div
+        className={`${shellGap} flex min-h-[200px] ${isModal ? 'flex-1' : ''} items-center justify-center rounded-2xl border border-slate-200/80 bg-slate-50/50 dark:border-slate-700/80 dark:bg-slate-900/40`}
+      >
+        <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+          <motion.div
+            className="h-5 w-5 rounded-full border-2 border-primary border-t-transparent"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
+          />
+          Chargement du chat…
+        </div>
+      </div>
+    );
+  }
+
+  if (statusError) {
+    return (
+      <div
+        className={`${shellGap} rounded-2xl border border-amber-200/90 bg-amber-50/90 px-4 py-3 dark:border-amber-800/60 dark:bg-amber-950/40`}
+      >
+        <p className="text-sm text-amber-900 dark:text-amber-100">{statusError}</p>
+      </div>
+    );
+  }
+
+  if (!chatEnabled) {
+    return (
+      <div
+        className={`${shellGap} overflow-hidden rounded-2xl border border-slate-200/90 bg-gradient-to-b from-slate-50 to-white dark:border-slate-700/80 dark:from-slate-900/80 dark:to-slate-950/80 ${isModal ? 'flex min-h-0 flex-1 flex-col' : ''}`}
+      >
+        <div
+          className={`flex flex-col items-center justify-center px-6 py-10 text-center ${isModal ? 'min-h-[280px] flex-1' : 'min-h-[220px]'}`}
+        >
+          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-200/80 text-slate-500 dark:bg-slate-700 dark:text-slate-300">
+            <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+              />
+            </svg>
+          </div>
+          <h3 className="text-base font-semibold text-slate-900 dark:text-white">Chat avec votre base documentaire</h3>
+          <p className="mt-2 max-w-sm text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+            Le chat sera disponible dès qu’au moins un document aura terminé l’indexation (statut{' '}
+            <span className="font-medium text-emerald-700 dark:text-emerald-400">READY</span>).
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const emptySession = !selectedSessionId;
+  const showEmptyHero =
+    !emptySession && !messagesLoading && messages.length === 0 && !sending;
+
+  return (
+    <div
+      className={`${shellGap} flex ${chatSize} flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm dark:border-slate-700/80 dark:bg-slate-950/50`}
+    >
+      {/* Barre d’outils */}
+      <div className="flex flex-shrink-0 flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-3 py-2.5 dark:border-slate-800 sm:px-4">
+        <div>
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Chat</h3>
+          <p className="text-[11px] text-slate-500 dark:text-slate-400">Réponses basées sur vos documents indexés</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="sr-only" htmlFor={`chat-session-${agentId}`}>
+            Conversation
+          </label>
+          <select
+            id={`chat-session-${agentId}`}
+            className="max-w-[11rem] cursor-pointer rounded-xl border-0 bg-slate-100 py-2 pl-3 pr-8 text-xs font-medium text-slate-800 shadow-sm ring-1 ring-slate-200/80 focus:outline-none focus:ring-2 focus:ring-primary/40 dark:bg-slate-800 dark:text-slate-100 dark:ring-slate-700"
+            value={selectedSessionId ?? ''}
+            onChange={(e) => setSelectedSessionId(e.target.value || null)}
+            disabled={sessionsLoading || sessions.length === 0}
+          >
+            {sessions.length === 0 ? (
+              <option value="">Aucune conversation</option>
+            ) : (
+              sessions.map((s, i) => (
+                <option key={s.sessionId} value={s.sessionId}>
+                  {`Conversation ${sessions.length - i}`}
+                </option>
+              ))
+            )}
+          </select>
+          <Button
+            type="button"
+            variant="ghost"
+            className="!rounded-xl !px-3 !py-2 text-xs font-medium"
+            onClick={() => void onNewSession()}
+            disabled={sessionsLoading}
+          >
+            + Nouvelle conversation
+          </Button>
+        </div>
+      </div>
+
+      {sessionsError && (
+        <p className="border-b border-amber-100 bg-amber-50/90 px-4 py-2 text-xs text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-200">
+          {sessionsError}
+        </p>
+      )}
+
+      {/* Zone messages */}
+      <div className="relative flex min-h-0 flex-1 flex-col bg-slate-50/80 dark:bg-slate-900/30">
+        <div className="min-h-0 flex-1 overflow-y-auto px-2 py-4 sm:px-4">
+          {messagesLoading ? (
+            <div className="flex h-full min-h-[200px] items-center justify-center">
+              <TypingIndicator />
+            </div>
+          ) : emptySession ? (
+            <div className="flex h-full min-h-[240px] flex-col items-center justify-center px-4 text-center">
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Créez une <strong className="font-medium text-slate-800 dark:text-slate-200">nouvelle conversation</strong>{' '}
+                pour commencer.
+              </p>
+            </div>
+          ) : showEmptyHero ? (
+            <div className="mx-auto flex max-w-lg flex-col items-center py-8 text-center">
+              <div className="mb-4 rounded-2xl bg-primary/10 px-4 py-3 dark:bg-primary/15">
+                <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                  Comment puis-je vous aider ?
+                </p>
+                <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+                  Posez une question sur le contenu de vos documents.
+                </p>
+              </div>
+              <p className="mb-3 text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                Suggestions
+              </p>
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-center">
+                {[
+                  'Résume les points clés du document.',
+                  'Quels sont les thèmes principaux ?',
+                  'Y a-t-il des définitions importantes ?',
+                ].map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => suggestionPick(s)}
+                    className="rounded-full border border-slate-200 bg-white px-4 py-2 text-left text-xs text-slate-700 transition hover:border-primary/40 hover:bg-primary/5 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-primary/50"
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="mx-auto max-w-3xl space-y-6 pb-4">
+              <AnimatePresence initial={false}>
+                {messages.map((m) => (
+                  <motion.div
+                    key={m.messageId}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className={`flex gap-3 ${m.role === 'USER' ? 'flex-row-reverse' : 'flex-row'}`}
+                  >
+                    {m.role === 'USER' ? <UserBubbleIcon /> : <AssistantBubbleIcon />}
+                    <div
+                      className={`max-w-[min(100%,28rem)] rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm ${
+                        m.role === 'USER'
+                          ? 'rounded-tr-md bg-primary text-white dark:bg-primary'
+                          : 'rounded-tl-md border border-slate-200/90 bg-white text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100'
+                      }`}
+                    >
+                      <p className="whitespace-pre-wrap break-words">{m.content}</p>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+              {sending && (
+                <div className="flex gap-3">
+                  <AssistantBubbleIcon />
+                  <div className="rounded-2xl rounded-tl-md border border-slate-200/90 bg-white px-4 py-2 dark:border-slate-700 dark:bg-slate-800">
+                    <TypingIndicator />
+                  </div>
+                </div>
+              )}
+              <div ref={bottomRef} className="h-px w-full shrink-0" />
+            </div>
+          )}
+        </div>
+
+        {/* Compositeur */}
+        <div className="flex-shrink-0 border-t border-slate-200/90 bg-white p-3 dark:border-slate-800 dark:bg-slate-950/80">
+          <form onSubmit={onSend} className="mx-auto max-w-3xl">
+            {actionError && (
+              <p className="mb-2 text-xs text-red-600 dark:text-red-400">{actionError}</p>
+            )}
+            <div className="flex items-end gap-2 rounded-2xl border border-slate-200 bg-slate-50/90 p-2 shadow-inner dark:border-slate-600 dark:bg-slate-900/80">
+              <textarea
+                ref={textareaRef}
+                rows={1}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={onKeyDown}
+                placeholder={
+                  selectedSessionId
+                    ? 'Posez une question… (Entrée pour envoyer, Maj+Entrée pour la ligne)'
+                    : 'Créez une conversation pour écrire'
+                }
+                disabled={!selectedSessionId || sending}
+                className="max-h-[200px] min-h-[44px] w-full resize-none bg-transparent px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none disabled:opacity-50 dark:text-slate-100 dark:placeholder:text-slate-500"
+              />
+              <button
+                type="submit"
+                disabled={!selectedSessionId || sending || !input.trim()}
+                className="mb-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-white shadow-md transition hover:brightness-110 disabled:pointer-events-none disabled:opacity-40"
+                aria-label="Envoyer"
+              >
+                {sending ? (
+                  <motion.div
+                    className="h-5 w-5 rounded-full border-2 border-white border-t-transparent"
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 0.7, repeat: Infinity, ease: 'linear' }}
+                  />
+                ) : (
+                  <SendIcon className="h-5 w-5" />
+                )}
+              </button>
+            </div>
+            <p className="mt-2 text-center text-[10px] text-slate-400 dark:text-slate-500">
+              L’historique est sauvegardé par conversation. Les réponses peuvent être imprécises : vérifiez les sources.
+            </p>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}

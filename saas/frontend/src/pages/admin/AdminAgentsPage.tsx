@@ -7,6 +7,7 @@ import {
   updateAgent,
   type Agent,
 } from '../../api/agents';
+import { AgentChatPanel } from '../../components/agents/AgentChatPanel';
 import { AgentDocumentSlot } from '../../components/agents/AgentDocumentSlot';
 import { Button } from '../../components/ui/Button';
 import { FormFeedback } from '../../components/ui/FormFeedback';
@@ -59,6 +60,9 @@ export function AdminAgentsPage() {
   const [deleteTarget, setDeleteTarget] = useState<Agent | null>(null);
   const [deleteSubmitting, setDeleteSubmitting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const [chatRefreshKey, setChatRefreshKey] = useState(0);
+  const [chatModalAgent, setChatModalAgent] = useState<Agent | null>(null);
 
   const load = useCallback(async () => {
     setListError(null);
@@ -243,11 +247,20 @@ export function AdminAgentsPage() {
                     <span className="italic text-slate-400 dark:text-slate-500">No description</span>
                   )}
                 </p>
-                <AgentDocumentSlot agentId={a.agentId} onIngestComplete={() => void load()} />
+                <AgentDocumentSlot
+                  agentId={a.agentId}
+                  onIngestComplete={() => {
+                    void load();
+                    setChatRefreshKey((k) => k + 1);
+                  }}
+                />
                 <p className="mt-3 text-xs text-slate-400 dark:text-slate-500">
                   Updated {formatShortDate(a.updatedAt)}
                 </p>
                 <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-4 dark:border-slate-800">
+                  <Button type="button" className="text-sm shadow-sm shadow-primary/15" onClick={() => setChatModalAgent(a)}>
+                    Chat
+                  </Button>
                   <Button type="button" variant="ghost" className="text-sm" onClick={() => openEdit(a)}>
                     Edit
                   </Button>
@@ -349,6 +362,62 @@ export function AdminAgentsPage() {
                   </Button>
                 </div>
               </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {chatModalAgent && (
+          <motion.div
+            className="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <button
+              type="button"
+              className="absolute inset-0 bg-slate-900/55 backdrop-blur-[2px]"
+              aria-label="Fermer le chat"
+              onClick={() => setChatModalAgent(null)}
+            />
+            <motion.div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="chat-modal-title"
+              initial={{ opacity: 0, scale: 0.97, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.97, y: 12 }}
+              transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+              className="relative z-10 flex h-[min(90vh,880px)] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-2xl dark:border-slate-700/80 dark:bg-slate-900"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex flex-shrink-0 items-start justify-between gap-3 border-b border-slate-100 px-4 py-3 dark:border-slate-800 sm:px-5">
+                <div className="min-w-0">
+                  <h2 id="chat-modal-title" className="truncate text-lg font-semibold text-slate-900 dark:text-white">
+                    {chatModalAgent.name}
+                  </h2>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Discussion avec l’assistant</p>
+                </div>
+                <button
+                  type="button"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                  aria-label="Fermer"
+                  onClick={() => setChatModalAgent(null)}
+                >
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 pb-3 pt-0 sm:px-4">
+                <AgentChatPanel
+                  agentId={chatModalAgent.agentId}
+                  refreshKey={chatRefreshKey}
+                  layout="modal"
+                />
+              </div>
             </motion.div>
           </motion.div>
         )}
