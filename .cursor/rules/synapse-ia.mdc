@@ -38,8 +38,9 @@ alwaysApply: true
 
 ## Documentation dépôt
 
-- `README.md` racine, `docs/TECHNICAL.md`, README par composant.
+- `README.md` racine, **`docs/TECHNICAL.md`** (Control Plane : entités `id` / `identifier`, **`X-API-Key`**, Swagger Basic, Docker `npm ci`, variables frontend), README par composant.
 
 ## Secrets
 
 - Ne pas committer `.env` ; ne pas exposer de clés dans le chat ou les tickets.
+- Control Plane : clés HTTP dans **`API_KEYS_JSON`** ou fichier ignoré (ex. `config/api-keys.local.json`) ; frontend aligné avec **`VITE_API_KEY`**.

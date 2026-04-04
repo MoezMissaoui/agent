@@ -25,19 +25,38 @@ MySQL : port **3306** par défaut quand le service est lancé via le compose rac
 ### Orchestration Docker (racine du dépôt)
 
 - **[`docker-compose.yml`](../docker-compose.yml)** : services **`mysql`**, **`phpmyadmin`** (image `phpmyadmin/phpmyadmin:5`, `PMA_HOST=mysql`), **`backend`**, **`frontend`**, **`agent`** (build `./agent`, volumes `chroma_data`, `agent_profiles`, `logs`). Publication agent : **`${API_PORT:-8546}:8000`**. Variables : **`.env`** racine (MySQL, `API_PORT` si pas d’import depuis `agent/.env`) et **`agent/.env`** (clés LLM, etc.) ; pour résoudre `API_PORT` depuis `agent/.env` : `docker compose --env-file .env --env-file agent/.env up`.
-- **[`docker-compose.dev.yml`](../docker-compose.dev.yml)** : développement — montages hot reload pour `backend`, `frontend` et `agent` (Nest `start:dev`, Vite, `uvicorn --reload`).
+- **[`docker-compose.dev.yml`](../docker-compose.dev.yml)** : développement — montages hot reload pour `backend`, `frontend` et `agent` (Nest `start:dev`, Vite, `uvicorn --reload`). Volumes **`backend_node_modules`** / **`frontend_node_modules`** : au démarrage, **`npm ci`** conditionnel si des paquets attendus manquent (voir commandes dans le fichier).
 
 ## Control Plane — backend (`saas/backend`)
 
 - **Stack :** NestJS, TypeORM, MySQL (`mysql2`), configuration via `@nestjs/config`.
 - **Module** `DatabaseModule` : `TypeOrmModule.forRootAsync`, `synchronize: true` uniquement si `NODE_ENV !== 'production'`.
 - **Entités** (tables) : `User`, `ApiKey`, `Agent`, `Document`, `ChatSession`, `Message` — voir `src/database/entities/`.
+- **Clés primaires et identifiants publics :** chaque entité a un **`id`** numérique auto-incrémenté et un champ **`identifier`** (`varchar(36)`, UUID unique, généré au `BeforeInsert`) pour l’exposition API / références stables. **`User.identifier`** est le **`sub`** JWT ; **`User.username`** est requis à l’inscription (unique, normalisé en minuscules).
 - **Enums** : `DocumentStatus` (`PENDING`, `PROCESSING`, `READY`, `FAILED`), `MessageRole` (`USER`, `ASSISTANT`).
+
+### Sécurité HTTP — `X-API-Key` (Control API)
+
+- Toute requête vers **`/api/v1.0/*`** doit envoyer l’en-tête **`X-API-Key`** avec un secret autorisé. Les requêtes **`OPTIONS`** (preflight CORS) sont exemptées de cette vérification.
+- **Configuration** (priorité) : variable **`API_KEYS_JSON`** (tableau JSON `[{ "name": "...", "token": "..." }]`) ; sinon fichier **`API_KEYS_FILE`** (défaut `config/api-keys.local.json` relatif au cwd). Exemple versionné : **`config/api-keys.example.json`**. Chargement : [`saas/backend/src/config/load-api-keys.ts`](../saas/backend/src/config/load-api-keys.ts). Sans clés configurées, le processus refuse de démarrer.
+- **CORS** : `allowedHeaders` inclut notamment **`Authorization`** et **`X-API-Key`** (voir [`main.ts`](../saas/backend/src/main.ts)).
+- **Auth applicative** : inchangée — **`JwtAuthGuard`** global + décorateur **`@Public()`** sur login, register, etc.
+
+### Swagger UI
+
+- URL : **`http://<host>:<PORT>/docs`** (hors préfixe `/api/v1.0`). **HTTP Basic** (navigateur) : variables **`SWAGGER_USER`** / **`SWAGGER_PASSWORD`** (défaut documentés dans `.env.example`). Le document OpenAPI inclut le schéma Bearer JWT et le schéma **`X-API-Key`** pour les tests dans l’UI.
+
+### Docker — dépendances Node (backend)
+
+- Image : [`saas/backend/Dockerfile`](../saas/backend/Dockerfile) — `COPY package.json` + `package-lock.json` puis **`npm ci`** à chaque build.
+- **`docker-compose.dev.yml`** : volume nommé **`backend_node_modules`** ; au démarrage du conteneur, si des paquets attendus manquent (ex. **`@nestjs/swagger`**, **`express-basic-auth`**), exécution de **`npm ci`** puis `npm run start:dev`. Après ajout de dépendances, rebuild ou supprimer le volume si besoin.
 
 ## Control Plane — frontend (`saas/frontend`)
 
-- **Stack :** React 19, TypeScript, Vite 8, TailwindCSS 3, Axios (installé).
-- État livré : application minimale validant Tailwind ; pas d’appels API métier encore.
+- **Stack :** React 19, TypeScript, Vite 8, TailwindCSS 3, Axios (version **pinnée** — voir `package.json` et règles Cursor).
+- **HTTP :** instance Axios [`src/lib/api.ts`](../saas/frontend/src/lib/api.ts) — URL de base **`VITE_API_URL`**, en-tête **`X-API-Key`** via **`VITE_API_KEY`** (aligné sur un `token` côté backend), **`Authorization: Bearer`** si jeton stocké.
+- **Variables `VITE_*` :** `VITE_API_URL`, `VITE_API_KEY`, `VITE_APP_NAME` (branding auth / admin) — voir `.env.example`.
+- **Routing :** préfixe API **`/api/v1.0`** ; UI admin sous **`/admin`** (`AdminLayout`), auth sous **`pages/auth`**. Animations de route : CSS dans `index.css` (`:root` **`--motion-duration`** / **`--motion-ease`**), pas d’animation globale sur `/admin` (animations locales shell + contenu).
 
 ## Data / AI Plane — agent (`agent`)
 
@@ -73,9 +92,8 @@ MySQL : port **3306** par défaut quand le service est lancé via le compose rac
 
 ## Intégration future (Nest ↔ agent)
 
-- Le Control Plane persiste des **UUID** (MySQL) pour utilisateurs et agents.
-- L’agent attend **`user_id`** et **`agent_id`** comme **chaînes** dans ses requêtes.
-- Lors du branchement applicatif, il faudra une règle explicite : par exemple transmettre les UUID en string, ou maintenir un mapping — hors périmètre de l’init actuelle.
+- Le Control Plane utilise des **`id`** numériques en base et des **`identifier`** (UUID) exposés ; l’agent attend **`user_id`** et **`agent_id`** comme **chaînes** dans ses requêtes.
+- Lors du branchement applicatif, aligner les **`identifier`** (ou conventions de mapping) avec ces chaînes — hors périmètre détaillé ici.
 
 ## Topologie (logique)
 

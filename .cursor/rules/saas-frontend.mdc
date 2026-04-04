@@ -1,5 +1,5 @@
 ---
-description: React Control Plane — Vite, Tailwind, Axios, design system & animations
+description: React Control Plane — Vite, Tailwind, Axios, X-API-Key, design system & animations
 globs: saas/frontend/**/*.{tsx,ts,css}
 alwaysApply: false
 ---
@@ -8,7 +8,7 @@ alwaysApply: false
 
 ## Stack
 
-**React** + **TypeScript**, **Vite**, **TailwindCSS**, **Axios** pour le HTTP, **react-router-dom** pour le routing, **framer-motion** pour les transitions entre pages.
+**React** + **TypeScript**, **Vite**, **TailwindCSS**, **Axios** pour le HTTP, **react-router-dom** pour le routing, **framer-motion** pour **AnimatedNotice** (notices formulaire) uniquement — les **transitions de route** hors `/admin` sont en **CSS** (`animate-page-enter`, variables `:root`).
 
 ## Principes
 
@@ -24,15 +24,21 @@ alwaysApply: false
 - **Couleurs** : accent **`primary` = `#007aff`** (boutons principaux, liens, focus). Surfaces **`surface`** / **`surface-dark`** (`tailwind.config.js`) pour les fonds page (`#f8f9fa` / `#0b0e14`).
 - **Typo** : **Inter** (Google Fonts dans `index.html`), classe `font-sans` Tailwind.
 - **Mode sombre** : toujours prévoir les variantes **`dark:`** pour fonds, bordures, textes (`slate-*`), champs (`Input`, `PasswordInput`), alertes (rouge / ambre), et **`ThemeToggle`** sur les écrans concernés.
-- **Layouts** : **`AuthLayout`** pour login / register / forgot / reset (carte centrée, dégradé de fond, logo). Dashboard **`HomePage`** : même esprit visuel (carte + fond dégradé) sans marketing inutile.
+- **Layouts** : **`AuthLayout`** pour login / register / forgot / reset (carte centrée, dégradé de fond, logo). **`AdminLayout`** pour le control panel sous **`/admin`** (sidebar, header, zone contenu). Dashboard **`HomePage`** : même esprit visuel (carte + fond dégradé) sans marketing inutile.
+- **Branding** : nom produit via **`VITE_APP_NAME`** (auth, titres admin).
 - **Boutons secondaires / liens** : bordure légère en clair, `dark:border-slate-600` en sombre ; bouton **primary** plein `bg-primary`.
 
 ## Animations & transitions
 
-- **Navigation** : **`AnimatedLayout`** (`AnimatePresence` + `motion.div` + `Outlet`) — durée ~**0,62s**, courbe **`[0.19, 1, 0.22, 1]`** (fluide), léger décalage **`y`** ; constantes dans **`src/lib/motion-presets.ts`** (`pageTransition`).
-- **Messages formulaire** (erreur mot de passe, validation, alertes ambre) : composant **`AnimatedNotice`** — même esprit, ~**0,55s** (`noticeTransition`), **`mode="wait"`** sur le message.
-- **`useReducedMotion()`** : désactive ou réduit les durées si l’utilisateur le demande.
-- **`prefers-reduced-motion`** : rappel CSS minimal dans `index.css` (scroll).
+- **Durée / courbe globales** : `:root` dans **`index.css`** — **`--motion-duration`**, **`--motion-ease`** (auth + admin ; modifier au même endroit).
+- **Routes** : **`AnimatedLayout`** — pas d’animation au premier chargement ; pas d’animation globale sous **`/admin`** (animations locales dans **`AdminLayout`** / contenu). Hors admin : classe **`animate-page-enter`** sur le wrapper (pas de `AnimatePresence` sur l’`Outlet`).
+- **Notices** (erreurs / validation) : **`AnimatedNotice`** + **`framer-motion`** ; courbes dans **`src/lib/motion-presets.ts`** (`noticeTransition`).
+- **`useReducedMotion()`** (framer) / **`prefers-reduced-motion`** : respect côté notices et rappel CSS dans `index.css`.
+
+## HTTP — Control Plane API
+
+- Client Axios central : **`src/lib/api.ts`** — **`baseURL`** = **`VITE_API_URL`**, en-tête **`X-API-Key`** = **`VITE_API_KEY`** (doit correspondre à un `token` backend), **`Authorization: Bearer`** si jeton stocké.
+- En dev, avertissement console si **`VITE_API_KEY`** est absent (réponses **403** côté API).
 
 ## Axios (sécurité)
 
@@ -42,4 +48,4 @@ alwaysApply: false
 
 ## Variables d’environnement
 
-- Préfixe **`VITE_`** pour toute variable exposée au bundle client (ex. `VITE_API_URL`).
+- Préfixe **`VITE_`** pour toute variable exposée au bundle client : **`VITE_API_URL`**, **`VITE_API_KEY`**, **`VITE_APP_NAME`** (voir `.env.example`).

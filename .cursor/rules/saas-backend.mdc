@@ -1,5 +1,5 @@
 ---
-description: NestJS Control Plane — TypeORM, modules, DTOs
+description: NestJS Control Plane — TypeORM, sécurité X-API-Key, Swagger, DTOs
 globs: saas/backend/**/*.ts
 alwaysApply: false
 ---
@@ -17,6 +17,29 @@ TypeScript, **NestJS**, **TypeORM**, **MySQL** ; config via `@nestjs/config`.
 - **DTOs** avec `class-validator` / `class-transformer` pour les entrées API.
 - Entités dans `src/database/entities/` ; logique métier dans les **services**, pas dans les contrôleurs.
 - **Commentaires** sur règles métier, cas limites et choix d’architecture (pourquoi ce module existe).
+
+## Entités et identifiants
+
+- Chaque entité a un **`id`** numérique auto-incrémenté et un **`identifier`** (`varchar(36)`, UUID unique, généré au `BeforeInsert`).
+- **`User`** : **`username`** requis, unique, normalisé en minuscules ; **`identifier`** sert de **`sub`** JWT (pas d’email dans le token).
+- **`ApiKey`** : clés applicatives (hash) ; ne pas confondre avec les secrets **`X-API-Key`** du périmètre HTTP (voir ci-dessous).
+
+## Sécurité HTTP — `X-API-Key`
+
+- Préfixe global API : **`/api/v1.0`**. Middleware Express sur **`/api/v1.0`** : toute requête doit porter l’en-tête **`X-API-Key`** avec un token autorisé ; **`OPTIONS`** est exempté (preflight CORS).
+- **Configuration** : [`src/config/load-api-keys.ts`](saas/backend/src/config/load-api-keys.ts) — priorité à **`API_KEYS_JSON`** (tableau JSON `[{ "name", "token" }]`), sinon fichier **`API_KEYS_FILE`** (défaut `config/api-keys.local.json`). Exemple versionné : **`config/api-keys.example.json`**. Sans aucune clé chargée, **`bootstrap`** lève une erreur (refus de démarrer).
+- **CORS** : inclure **`X-API-Key`** (et **`Authorization`**, etc.) dans `allowedHeaders` (`main.ts`).
+- **Auth JWT** : **`JwtAuthGuard`** global ; routes publiques avec **`@Public()`** (login, register, refresh, etc.).
+
+## Swagger
+
+- UI : **`/docs`** et JSON : **`/docs-json`** — protégés par **HTTP Basic** (`express-basic-auth`) avec **`SWAGGER_USER`** / **`SWAGGER_PASSWORD`** (voir `.env.example`).
+- Document : Bearer JWT + schéma **`X-API-Key`** pour tester les routes protégées.
+
+## Docker / dépendances
+
+- **`saas/backend/Dockerfile`** : `COPY package.json` + `package-lock.json` puis **`npm ci`**.
+- **`docker-compose.dev.yml`** : volume **`backend_node_modules`** ; commande de démarrage exécute **`npm ci`** si des paquets attendus manquent (ex. **`@nestjs/swagger`**, **`express-basic-auth`**) puis `npm run start:dev`. Après ajout de deps, rebuild ou purge du volume si nécessaire.
 
 ## À éviter
 
