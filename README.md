@@ -10,6 +10,19 @@ Monorepo pour une plateforme **RAG multi-tenant** : un **Control Plane** (SaaS �
 
 Documentation technique consolidée : [`docs/TECHNICAL.md`](docs/TECHNICAL.md).
 
+## Interface web (Control Plane UI)
+
+Application React dans [`saas/frontend`](saas/frontend) : authentification (email / mot de passe, Google si `VITE_GOOGLE_AUTH_ENABLED`), shell admin avec sidebar, thème clair / sombre.
+
+| Zone | Contenu |
+|------|---------|
+| **Dashboard** | Indicateurs pour l’utilisateur connecté (agents, documents indexés, chat 24h), sessions récentes, liens rapides |
+| **Agents** | Création / édition d’agents, ingestion de documents (PDF / TXT), chat RAG avec sessions |
+| **API access** / **Settings** | Pages produit (intégration API, réglages workspace) — pas de placeholder générique |
+| **Profil** | Compte, mot de passe |
+
+La navigation met l’accent sur **Agents** (flux principal). Détails techniques du client HTTP, variables `VITE_*` : voir [`saas/frontend/README.md`](saas/frontend/README.md).
+
 ## Prérequis
 
 - **Node.js 20** (npm) pour `saas/backend` et `saas/frontend`
@@ -38,6 +51,8 @@ Développement (reload backend, frontend et agent sans rebuild à chaque edit) :
 ```bash
 docker compose --env-file .env --env-file agent/.env -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 ```
+
+Le fichier [`docker-compose.dev.yml`](docker-compose.dev.yml) monte le code (`agent/app`, `run.py`) et mappe **`./agent/logs` → `/data/logs`** dans le conteneur agent pour voir les journaux sur l’hôte.
 
 Puis `make dev` pour relancer sans `--build` quand seul le code change.
 

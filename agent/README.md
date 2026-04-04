@@ -62,6 +62,8 @@ Toutes les variables sont documentées dans **`.env.example`**. Les plus utilis�
 | `RAG_N_RESULTS` / `RAG_MAX_CONTEXT_CHARS` | Top-K retrieval puis plafond caractères contexte LLM |
 | `LOG_DIR` / `LOG_LEVEL` / `LOG_RETENTION_DAYS` | Logs fichier journalier + rétention ; `app.*` et uvicorn vers le même fichier |
 
+**Intégration Control Plane (Nest)** : le backend appelle ce service avec la base URL `DATA_PLANE_BASE_URL` et, si configuré, l’en-tête **`X-API-Key`** (`AGENT_API_X_KEY` côté Nest). Côté agent, définir **`INTERNAL_API_KEY`** avec la **même** valeur pour exiger cette clé sur les routes `/internal/v1/*` (voir `.env.example`).
+
 ### Où sont les fichiers `.log` ?
 
 - **En local** (`python run.py` depuis `agent/`, répertoire courant = `agent/`) : **`./logs/YYYY-MM-DD.log`** (dossier `logs/` à côté du code).
