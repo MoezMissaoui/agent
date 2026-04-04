@@ -45,6 +45,10 @@ async function bootstrap() {
         next();
         return;
       }
+      if (req.path.startsWith('/auth/google')) {
+        next();
+        return;
+      }
       const raw = req.headers['x-api-key'];
       const key = Array.isArray(raw) ? raw[0] : raw;
       if (!key || !allowedTokens.has(key)) {

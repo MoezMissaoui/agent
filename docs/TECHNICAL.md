@@ -35,6 +35,13 @@ MySQL : port **3306** par défaut quand le service est lancé via le compose rac
 - **Clés primaires et identifiants publics :** chaque entité a un **`id`** numérique auto-incrémenté et un champ **`identifier`** (`varchar(36)`, UUID unique, généré au `BeforeInsert`) pour l’exposition API / références stables. **`User.identifier`** est le **`sub`** JWT ; **`User.username`** est requis à l’inscription (unique, normalisé en minuscules).
 - **Enums** : `DocumentStatus` (`PENDING`, `PROCESSING`, `READY`, `FAILED`), `MessageRole` (`USER`, `ASSISTANT`).
 
+### Google OAuth (optionnel)
+
+- Variables **`GOOGLE_CLIENT_ID`**, **`GOOGLE_CLIENT_SECRET`**, **`GOOGLE_CALLBACK_URL`** (ex. `http://localhost:8547/api/v1.0/auth/google/callback`) : si les trois sont définies, le backend expose **`GET /api/v1.0/auth/google`** et **`GET /api/v1.0/auth/google/callback`** (sans exiger **`X-API-Key`** sur ces chemins — navigation navigateur).
+- **Origines JavaScript autorisées** (console Google) : origine du front, ex. **`http://localhost:8548`**.
+- **URI de redirection autorisées** : identique à **`GOOGLE_CALLBACK_URL`**.
+- Front : **`VITE_GOOGLE_AUTH_ENABLED=true`** pour afficher le bouton sur `/login` ; après succès, redirection vers **`/auth/google/callback`** avec les JWT dans le fragment d’URL.
+
 ### Sécurité HTTP — `X-API-Key` (Control API)
 
 - Toute requête vers **`/api/v1.0/*`** doit envoyer l’en-tête **`X-API-Key`** avec un secret autorisé. Les requêtes **`OPTIONS`** (preflight CORS) sont exemptées de cette vérification.

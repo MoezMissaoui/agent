@@ -26,8 +26,13 @@ export class User {
   @Column({ unique: true, length: 32 })
   username: string;
 
-  @Column()
-  password: string;
+  /** Null si compte créé uniquement via OAuth (ex. Google). */
+  @Column({ type: 'varchar', nullable: true })
+  password: string | null;
+
+  /** Sujet Google OpenID — liaison compte. */
+  @Column({ name: 'google_id', type: 'varchar', length: 255, nullable: true, unique: true })
+  googleId: string | null;
 
   /** SHA-256 hex du token brut (mot de passe oublié) */
   @Column({

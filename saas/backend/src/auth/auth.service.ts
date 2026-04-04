@@ -10,6 +10,7 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { createHash, randomBytes } from 'crypto';
+import type { Profile } from 'passport-google-oauth20';
 import { Repository } from 'typeorm';
 import { User } from '../database/entities/user.entity';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
@@ -68,7 +69,14 @@ export class AuthService {
     const user = await this.users.findOne({
       where: { email: dto.email.toLowerCase() },
     });
-    if (!user || !(await bcrypt.compare(dto.password, user.password))) {
+    if (!user || !user.password) {
+      throw new UnauthorizedException(
+        user && !user.password
+          ? 'This account uses Google sign-in.'
+          : 'Invalid credentials',
+      );
+    }
+    if (!(await bcrypt.compare(dto.password, user.password))) {
       throw new UnauthorizedException('Invalid credentials');
     }
     const remember = Boolean(dto.rememberMe);
@@ -149,6 +157,62 @@ export class AuthService {
     user.passwordResetExpires = null;
     await this.users.save(user);
     return { message: 'Password has been reset. You can sign in.' };
+  }
+
+  /** Après OAuth Google — même JWT que login / register. */
+  async oauthTokens(identifier: string, email: string) {
+    return this.issueTokenPair(identifier, email, false);
+  }
+
+  async validateGoogleProfile(profile: Profile) {
+    const googleId = profile.id;
+    const email = profile.emails?.[0]?.value?.toLowerCase();
+    if (!email) {
+      throw new UnauthorizedException('Google account has no email');
+    }
+    let user = await this.users.findOne({ where: { googleId } });
+    if (user) {
+      return { identifier: user.identifier, email: user.email };
+    }
+    user = await this.users.findOne({ where: { email } });
+    if (user) {
+      if (user.googleId && user.googleId !== googleId) {
+        throw new ConflictException('This email is linked to another Google account');
+      }
+      user.googleId = googleId;
+      await this.users.save(user);
+      return { identifier: user.identifier, email: user.email };
+    }
+    const username = await this.generateUniqueUsernameFromEmail(email);
+    const created = this.users.create({
+      email,
+      username,
+      password: null,
+      googleId,
+    });
+    await this.users.save(created);
+    return { identifier: created.identifier, email: created.email };
+  }
+
+  private async generateUniqueUsernameFromEmail(email: string): Promise<string> {
+    const local = email.split('@')[0] ?? 'user';
+    let base = local.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 32);
+    if (base.length < 3) {
+      base = `${base}usr`.slice(0, 32);
+    }
+    if (!base) {
+      base = 'user';
+    }
+    let candidate = base;
+    for (let n = 0; n < 30; n++) {
+      const exists = await this.users.findOne({ where: { username: candidate } });
+      if (!exists) {
+        return candidate;
+      }
+      const suffix = randomBytes(3).toString('hex');
+      candidate = `${base.slice(0, 32 - suffix.length)}${suffix}`.slice(0, 32);
+    }
+    throw new ConflictException('Could not allocate username');
   }
 
   private issueTokenPair(userId: string, email: string, remember: boolean) {
