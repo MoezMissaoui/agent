@@ -11,6 +11,14 @@ class ChatHistoryItem(BaseModel):
 class ChatRequest(BaseModel):
     user_id: str
     agent_id: str
+    agent_name: str | None = Field(
+        None,
+        description="Nom affiché de l’assistant (Control Plane) ; optionnel pour le périmètre du prompt.",
+    )
+    agent_description: str | None = Field(
+        None,
+        description="Description / mission (Control Plane) ; optionnel pour le périmètre du prompt.",
+    )
     session_id: str | None = None
     query: str = Field(
         ...,
@@ -65,10 +73,3 @@ class DocumentDeleteResponse(BaseModel):
     agent_id: str
     filename: str | None = None
     chunks_removed: int
-
-
-class AgentProfileResponse(BaseModel):
-    user_id: str
-    agent_id: str
-    name: str | None = None
-    description: str | None = None

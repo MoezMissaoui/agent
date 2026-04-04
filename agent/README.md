@@ -2,7 +2,7 @@
 
 > **Synapse — Data / AI Plane :** ce service est le plan **données / IA** (RAG, Chroma, LLM), distinct du **Control Plane** dans `saas/`. Vue d’ensemble du dépôt : [README à la racine](../README.md) · [Documentation technique](../docs/TECHNICAL.md).
 
-Microservice **FastAPI** : ingestion **PDF / TXT** → **ChromaDB** (vecteurs + métadonnées `user_id`, `agent_id`), puis **chat RAG** via **Gemini** ou **OpenAI** (prompt strict, température 0). Profil agent optionnel (nom + description) pour cadrer le système prompt.
+Microservice **FastAPI** : ingestion **PDF / TXT** → **ChromaDB** (vecteurs + métadonnées `user_id`, `agent_id`), puis **chat RAG** via **Gemini** ou **OpenAI** (prompt strict, température 0). Le nom / la mission de l’assistant peuvent être passés en option dans le corps JSON du chat (`agent_name`, `agent_description`) — la source de vérité métier est le Control Plane (MySQL).
 
 **Prérequis :** Python 3.10+, clé API selon `LLM_PROVIDER`. Stack : Chroma, PyMuPDF, LangChain (split), httpx.
 
@@ -43,7 +43,7 @@ docker compose --env-file .env --env-file agent/.env -f docker-compose.yml -f do
 Équivalent : depuis la **racine** du dépôt, `make dev-build` puis `make dev` (voir le `Makefile` racine).
 
 - **Swagger :** `http://127.0.0.1:<API_PORT>/docs` — `API_PORT` dans **`agent/.env`** (port **hôte**, ex. **8546** ; l’app écoute en **8000** dans le conteneur).
-- **Données persistantes** (volumes nommés du compose racine) : Chroma `/data/chroma`, profils `/data/agent_profiles`, logs `/data/logs`.
+- **Données persistantes** (volumes nommés du compose racine) : Chroma `/data/chroma`, logs `/data/logs`.
 - **Image seule :** `docker build -t data-ai-plane .` puis `docker run --env-file .env -e API_PORT=8000 -e CHROMA_PERSIST_PATH=/data/chroma -v chroma:/data/chroma -p 8546:8000 data-ai-plane` (adapter volumes et variables).
 
 Avec **`EMBEDDING_MODEL`** (Sentence Transformers), étendre le `Dockerfile` (`pip install sentence-transformers` + dépendances éventuelles) : l’image de base ne les inclut pas.
@@ -60,7 +60,6 @@ Toutes les variables sont documentées dans **`.env.example`**. Les plus utilis�
 | `API_HOST` / `API_PORT` | Écoute HTTP |
 | `CHROMA_PERSIST_PATH` | Dossier persistance Chroma |
 | `RAG_N_RESULTS` / `RAG_MAX_CONTEXT_CHARS` | Top-K retrieval puis plafond caractères contexte LLM |
-| `AGENT_PROFILES_PATH` | Stockage `profiles.json` des profils agents |
 | `LOG_DIR` / `LOG_LEVEL` / `LOG_RETENTION_DAYS` | Logs fichier journalier + rétention ; `app.*` et uvicorn vers le même fichier |
 
 ## API — référence groupée
@@ -77,22 +76,11 @@ Isolation multi-tenant : **`user_id`** + **`agent_id`** sur toutes les routes ci
 | `DELETE` | `/internal/v1/documents/file` | Supprime les chunks d’un fichier (query `user_id`, `agent_id`, `filename`) |
 | `DELETE` | `/internal/v1/documents/all` | Supprime tous les chunks du tenant |
 
-### Agents
-
-| Méthode | Chemin | Description |
-|---------|--------|-------------|
-| `POST` | `/internal/v1/agents/profile` | **Création** — `multipart` : `user_id`, `agent_id`, `name` (optionnel), fichier `description` **.txt** (optionnel) ; au moins l’un des deux. **409** si profil déjà présent |
-| `PUT` | `/internal/v1/agents/profile` | **Mise à jour** — même schéma ; **404** si absent |
-| `GET` | `/internal/v1/agents/profile` | Query `user_id`, `agent_id` — **404** si absent |
-| `DELETE` | `/internal/v1/agents/profile` | Query `user_id`, `agent_id` |
-
-Description longue = fichier **.txt** uniquement (UTF-8) ; max : `AGENT_PROFILE_DESCRIPTION_MAX_BYTES`.
-
 ### Chat
 
 | Méthode | Chemin | Description |
 |---------|--------|-------------|
-| `POST` | `/internal/v1/chat` | **JSON** : `user_id`, `agent_id`, `query`, `history` (optionnel), `session_id` (optionnel), `source_filename` (optionnel, un fichier de la liste documents) |
+| `POST` | `/internal/v1/chat` | **JSON** : `user_id`, `agent_id`, `query`, `history` (optionnel), `session_id` (optionnel), `source_filename` (optionnel), `agent_name` / `agent_description` (optionnels — périmètre du prompt, typiquement depuis le Control Plane) |
 
 **Erreurs avant appel LLM :** **404** si aucun chunk Chroma pour ce `user_id` → `Utilisateur inexistant.` ; si l’utilisateur a des données mais pas ce couple agent → `Agent inexistant pour cet utilisateur.`
 
@@ -105,15 +93,10 @@ Description longue = fichier **.txt** uniquement (UTF-8) ; max : `AGENT_PROFILE_
 curl -X POST "http://127.0.0.1:8000/internal/v1/documents/ingest" \
   -F "file=@./notes.txt" -F "user_id=user-1" -F "agent_id=agent-1"
 
-# Profil agent (description = fichier .txt)
-curl -X POST "http://127.0.0.1:8000/internal/v1/agents/profile" \
-  -F "user_id=user-1" -F "agent_id=agent-1" -F "name=Mon assistant" \
-  -F "description=@./mission.txt;type=text/plain"
-
-# Chat
+# Chat (optionnel : agent_name / agent_description pour le périmètre du prompt)
 curl -X POST "http://127.0.0.1:8000/internal/v1/chat" \
   -H "Content-Type: application/json" \
-  -d '{"user_id":"user-1","agent_id":"agent-1","query":"Résumé du document ?","history":[]}'
+  -d '{"user_id":"user-1","agent_id":"agent-1","query":"Résumé du document ?","history":[],"agent_name":"Mon assistant","agent_description":"..."}'
 ```
 
 ## Sécurité

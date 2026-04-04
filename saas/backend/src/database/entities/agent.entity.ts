@@ -32,6 +32,9 @@ export class Agent {
   @Column()
   name: string;
 
+  @Column({ type: 'text', nullable: true })
+  description: string | null;
+
   @Column({ name: 'system_prompt', type: 'text', nullable: true })
   systemPrompt: string | null;
 

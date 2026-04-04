@@ -23,10 +23,6 @@ class Settings(BaseSettings):
     internal_api_key: str = ""
     chroma_persist_path: str = "./chroma_data"
     global_collection_name: str = "global_rag_collection"
-    # JSON store for agent name + description (per user_id / agent_id), see /internal/v1/agents/profile
-    agent_profiles_path: str = "./agent_profiles"
-    # Taille max du fichier .txt « description » (POST/PUT multipart)
-    agent_profile_description_max_bytes: int = Field(default=512_000, ge=1_000, le=10_000_000)
     # Max chunks from semantic search (top-K). Not "all rows in Chroma"; see README.
     rag_n_results: int = Field(default=15, ge=1, le=50_000)
     # Plafond caractères pour le texte des chunks envoyés au LLM (hors system / historique).

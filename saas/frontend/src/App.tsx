@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './context/AuthProvider';
 import { AdminLayout } from './layouts/AdminLayout';
 import { AnimatedLayout } from './layouts/AnimatedLayout';
+import { AdminAgentsPage } from './pages/admin/AdminAgentsPage';
 import { AdminHomePage } from './pages/admin/AdminHomePage';
 import { AdminPlaceholderPage } from './pages/admin/AdminPlaceholderPage';
 import { AdminProfilePage } from './pages/admin/AdminProfilePage';
@@ -34,6 +35,7 @@ function App() {
               }
             >
               <Route index element={<AdminHomePage />} />
+              <Route path="agents" element={<AdminAgentsPage />} />
               <Route path="profile" element={<AdminProfilePage />} />
               <Route
                 path="users"

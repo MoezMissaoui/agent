@@ -11,7 +11,6 @@ from app.rag.llm_router import generate_rag_reply
 from app.rag.prompts import build_full_rag_system_prompt
 from app.rag.query import resolve_retrieval_and_question
 from app.schemas import ChatRequest, ChatResponse
-from app.services.agent_profiles import get_profile
 from app.services.chroma import chat_tenant_error_message, get_collection, tenant_where
 
 router = APIRouter(prefix="/internal/v1", tags=["chat"])
@@ -71,9 +70,8 @@ async def chat(req: ChatRequest) -> ChatResponse:
         ids_preview=ids_preview,
     )
 
-    prof = get_profile(req.user_id, req.agent_id)
-    eff_name = (prof.get("name") or "").strip() or None if prof else None
-    eff_desc = (prof.get("description") or "").strip() or None if prof else None
+    eff_name = (req.agent_name or "").strip() or None
+    eff_desc = (req.agent_description or "").strip() or None
     system_prompt = build_full_rag_system_prompt(
         agent_name=eff_name,
         agent_description=eff_desc,

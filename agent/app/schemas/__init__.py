@@ -1,5 +1,4 @@
 from app.schemas.models import (
-    AgentProfileResponse,
     ChatHistoryItem,
     ChatRequest,
     ChatResponse,
@@ -11,7 +10,6 @@ from app.schemas.models import (
 )
 
 __all__ = [
-    "AgentProfileResponse",
     "ChatHistoryItem",
     "ChatRequest",
     "ChatResponse",

@@ -24,7 +24,7 @@ MySQL : port **3306** par défaut quand le service est lancé via le compose rac
 
 ### Orchestration Docker (racine du dépôt)
 
-- **[`docker-compose.yml`](../docker-compose.yml)** : services **`mysql`**, **`phpmyadmin`** (image `phpmyadmin/phpmyadmin:5`, `PMA_HOST=mysql`), **`backend`**, **`frontend`**, **`agent`** (build `./agent`, volumes `chroma_data`, `agent_profiles`, `logs`). Publication agent : **`${API_PORT:-8546}:8000`**. Variables : **`.env`** racine (MySQL, `API_PORT` si pas d’import depuis `agent/.env`) et **`agent/.env`** (clés LLM, etc.) ; pour résoudre `API_PORT` depuis `agent/.env` : `docker compose --env-file .env --env-file agent/.env up`.
+- **[`docker-compose.yml`](../docker-compose.yml)** : services **`mysql`**, **`phpmyadmin`** (image `phpmyadmin/phpmyadmin:5`, `PMA_HOST=mysql`), **`backend`**, **`frontend`**, **`agent`** (build `./agent`, volumes `chroma_data`, `logs`). Publication agent : **`${API_PORT:-8546}:8000`**. Variables : **`.env`** racine (MySQL, `API_PORT` si pas d’import depuis `agent/.env`) et **`agent/.env`** (clés LLM, etc.) ; pour résoudre `API_PORT` depuis `agent/.env` : `docker compose --env-file .env --env-file agent/.env up`.
 - **[`docker-compose.dev.yml`](../docker-compose.dev.yml)** : développement — montages hot reload pour `backend`, `frontend` et `agent` (Nest `start:dev`, Vite, `uvicorn --reload`). Volumes **`backend_node_modules`** / **`frontend_node_modules`** : au démarrage, **`npm ci`** conditionnel si des paquets attendus manquent (voir commandes dans le fichier).
 
 ## Control Plane — backend (`saas/backend`)
@@ -83,7 +83,7 @@ MySQL : port **3306** par défaut quand le service est lancé via le compose rac
 
 ### Point d’entrée
 
-- Fichier [`agent/app/main.py`](../agent/app/main.py) : enregistrement des routeurs `documents`, `agents`, `chat` ; au démarrage : configuration des logs, création des répertoires Chroma / profils, initialisation de la collection Chroma.
+- Fichier [`agent/app/main.py`](../agent/app/main.py) : enregistrement des routeurs `documents`, `chat` ; au démarrage : configuration des logs, création du répertoire Chroma, initialisation de la collection Chroma.
 
 ### Sécurité des routes internes
 
@@ -93,13 +93,11 @@ MySQL : port **3306** par défaut quand le service est lancé via le compose rac
 
 - Préfixe **`/internal/v1`** — détail des chemins, méthodes et corps : [`agent/README.md`](../agent/README.md).
 - **Documents :** ingestion asynchrone (`job_id`), statut, liste, suppression par fichier ou tout le tenant.
-- **Agents :** profils (nom + description fichier `.txt`) stockés côté service.
-- **Chat :** JSON avec `user_id`, `agent_id`, `query`, historique optionnel, etc.
+- **Chat :** JSON avec `user_id`, `agent_id`, `query`, historique optionnel, et optionnellement `agent_name` / `agent_description` (périmètre du prompt — source de vérité côté Control Plane).
 
 ### Données locales au service
 
 - Collection Chroma (`global_collection_name` dans la config).
-- Fichiers de profils agents sous `AGENT_PROFILES_PATH`.
 - Journaux fichier sous `LOG_DIR`.
 
 ### Docker (orchestration)

@@ -6,6 +6,7 @@ import { appInitial, appName } from '../lib/brand';
 
 const navItems = [
   { to: '/admin', end: true, label: 'Dashboard' },
+  { to: '/admin/agents', label: 'Agents' },
   { to: '/admin/users', label: 'Users' },
   { to: '/admin/api-keys', label: 'API keys' },
   { to: '/admin/settings', label: 'Settings' },
@@ -35,6 +36,16 @@ function IconDashboard(props: { className?: string }) {
   );
 }
 
+function IconAgents(props: { className?: string }) {
+  return (
+    <svg className={props.className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="5" y="9" width="14" height="10" rx="2" />
+      <path d="M9 15h.01M15 15h.01" />
+      <path d="M12 9V7a2 2 0 012-2h2" />
+    </svg>
+  );
+}
+
 function IconUsers(props: { className?: string }) {
   return (
     <svg className={props.className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -60,7 +71,7 @@ function IconSettings(props: { className?: string }) {
   );
 }
 
-const navIcon = [IconDashboard, IconUsers, IconKey, IconSettings] as const;
+const navIcon = [IconDashboard, IconAgents, IconUsers, IconKey, IconSettings] as const;
 
 const SIDEBAR_COLLAPSED_KEY = 'synapse-admin-sidebar-collapsed';
 
