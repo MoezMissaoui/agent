@@ -62,6 +62,16 @@ Toutes les variables sont documentées dans **`.env.example`**. Les plus utilis�
 | `RAG_N_RESULTS` / `RAG_MAX_CONTEXT_CHARS` | Top-K retrieval puis plafond caractères contexte LLM |
 | `LOG_DIR` / `LOG_LEVEL` / `LOG_RETENTION_DAYS` | Logs fichier journalier + rétention ; `app.*` et uvicorn vers le même fichier |
 
+### Où sont les fichiers `.log` ?
+
+- **En local** (`python run.py` depuis `agent/`, répertoire courant = `agent/`) : **`./logs/YYYY-MM-DD.log`** (dossier `logs/` à côté du code).
+- **Docker Compose (fichier racine uniquement)** : `LOG_DIR` vaut `/data/logs` dans le conteneur ; les fichiers sont dans le **volume nommé** `logs` (pas dans `agent/logs` du dépôt sur l’hôte). Pour les voir :  
+  `docker compose exec agent ls -la /data/logs`  
+  ou inspecter le volume : `docker volume inspect synapseia_logs` (le nom peut varier selon le préfixe du projet).
+- **Docker Compose + `docker-compose.dev.yml`** : montage **`./agent/logs` → `/data/logs`**, les fichiers **`agent/logs/YYYY-MM-DD.log`** sur la machine hôte sont bien ceux du service.
+
+Si vous n’avez **aucune** ligne `app.*` dans le fichier, les routes **documents** peuvent ne rien émettre avant ; un appel **chat** ou une ligne **ingest** (après mise à jour) produit des entrées `INFO`.
+
 ## API — référence groupée
 
 Isolation multi-tenant : **`user_id`** + **`agent_id`** sur toutes les routes ci-dessous.

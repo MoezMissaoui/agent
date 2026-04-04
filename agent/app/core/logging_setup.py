@@ -105,7 +105,10 @@ def _attach_daily_file_handler(logger: logging.Logger, fh: DailyDateFileHandler)
 def configure_app_package_logging() -> None:
     """
     Console stderr pour `app.*`, fichier du jour `LOG_DIR/YYYY-MM-DD.log`,
-    rétention LOG_RETENTION_DAYS jours, uvicorn + root vers le même fichier.
+    rétention LOG_RETENTION_DAYS jours. Handler fichier sur `root` ; `uvicorn.*`
+    est forcé en propagate pour que les lignes d’accès HTTP y arrivent aussi.
+    Appeler après l’import du module `app` (ex. fin de `main.py`), une fois Uvicorn
+    ayant appliqué sa config logging.
     """
     global _done
     if _done:
@@ -137,9 +140,11 @@ def configure_app_package_logging() -> None:
     # évite le double écriture si le même handler est sur uvicorn et root.
     pkg.propagate = True
 
-    for name in ("uvicorn", "uvicorn.access"):
+    # Uvicorn sets propagate=False on these by default, so access/error lines never reached root's file handler.
+    for name in ("uvicorn", "uvicorn.access", "uvicorn.error"):
         lg = logging.getLogger(name)
         lg.setLevel(level)
+        lg.propagate = True
 
     root = logging.getLogger()
     root.setLevel(level)

@@ -26,9 +26,12 @@ services:
       sh -c "if [ ! -d node_modules/vite ] || [ ! -d node_modules/framer-motion ]; then npm ci; fi && npm run dev -- --host 0.0.0.0 --port 8548"
 
   agent:
+    # Bind-mount logs so YYYY-MM-DD.log appears under ./agent/logs on the host (base compose uses a named volume).
     volumes:
       - ./agent/app:/app/app
       - ./agent/run.py:/app/run.py
+      - ./agent/logs:/data/logs
+      - chroma_data:/data/chroma
     command:
       [
         "sh",

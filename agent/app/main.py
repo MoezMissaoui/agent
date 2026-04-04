@@ -17,9 +17,11 @@ _internal_deps = [Depends(require_internal_api_key)]
 app.include_router(documents.router, dependencies=_internal_deps)
 app.include_router(chat.router, dependencies=_internal_deps)
 
+# After uvicorn's logging config (runs when this module is imported). Startup alone is too late if workers differ.
+configure_app_package_logging()
+
 
 @app.on_event("startup")
 def _startup() -> None:
-    configure_app_package_logging()
     Path(settings.chroma_persist_path).mkdir(parents=True, exist_ok=True)
     get_collection()

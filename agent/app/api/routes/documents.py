@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from pathlib import Path
 
 from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, Query, UploadFile, status
@@ -27,6 +28,7 @@ from app.services.ingestion import ingest_file_bytes
 ALLOWED_EXTENSIONS = {".pdf", ".txt"}
 
 router = APIRouter(prefix="/internal/v1/documents", tags=["documents"])
+_log = logging.getLogger(__name__)
 
 
 async def _ingest_task(
@@ -76,6 +78,14 @@ async def ingest_document(
     data = await file.read()
     is_pdf = suffix == ".pdf"
     job_id = create_job(user_id=user_id, agent_id=agent_id, filename=file.filename)
+    _log.info(
+        "ingest accepted job_id=%s filename=%s agent_id=%s user_id=%s bytes=%d",
+        job_id,
+        file.filename,
+        agent_id,
+        user_id,
+        len(data),
+    )
     background_tasks.add_task(
         _ingest_task,
         job_id,
