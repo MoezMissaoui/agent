@@ -23,6 +23,9 @@ coverage/
 .env.*
 !.env.example
 
+# Clés API locales (copier depuis config/api-keys.example.json)
+config/api-keys.local.json
+
 # OS
 .DS_Store
 Thumbs.db

@@ -1,10 +1,21 @@
 import axios from 'axios';
 
 const baseURL = import.meta.env.VITE_API_URL ?? 'http://localhost:8547';
+const apiKey = import.meta.env.VITE_API_KEY as string | undefined;
+
+if (import.meta.env.DEV && !apiKey) {
+  console.warn(
+    '[api] VITE_API_KEY is not set; requests to the Control Plane API will return 403.',
+  );
+}
 
 export const api = axios.create({
   baseURL,
-  headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+  headers: {
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+    ...(apiKey ? { 'X-API-Key': apiKey } : {}),
+  },
 });
 
 const ACCESS = 'synapse_access_token';
