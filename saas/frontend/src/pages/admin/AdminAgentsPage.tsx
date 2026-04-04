@@ -266,12 +266,17 @@ export function AdminAgentsPage() {
                   <Button type="button" className="text-sm shadow-sm shadow-primary/15" onClick={() => setChatModalAgent(a)}>
                     Chat
                   </Button>
-                  <Button type="button" variant="ghost" className="text-sm" onClick={() => openEdit(a)}>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="text-sm !bg-slate-200 !text-slate-800 hover:!bg-slate-300 dark:!bg-slate-700 dark:!text-slate-200 dark:hover:!bg-slate-600"
+                    onClick={() => openEdit(a)}
+                  >
                     Edit
                   </Button>
                   <button
                     type="button"
-                    className="rounded-xl px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-500/10 dark:text-red-400"
+                    className="rounded-xl px-3 py-2 text-sm font-medium bg-slate-200 text-red-600 transition hover:bg-slate-300 dark:bg-slate-700 dark:text-red-400 dark:hover:bg-slate-600"
                     onClick={() => {
                       setDeleteError(null);
                       setDeleteTarget(a);
