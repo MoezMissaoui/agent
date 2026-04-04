@@ -81,6 +81,8 @@ async function bootstrap() {
       { type: 'apiKey', name: 'X-API-Key', in: 'header', description: 'Client API key' },
       'api-key',
     )
+    // Sans ceci, le schéma apparaît dans « Authorize » mais n’est pas appliqué aux requêtes « Try it out ».
+    .addSecurityRequirements('api-key')
     .build();
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('docs', app, document);

@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Post, Req } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { Public } from './decorators/public.decorator';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
@@ -12,6 +12,7 @@ type AuthedRequest = Express.Request & {
   user: { userId: string; email: string };
 };
 
+@ApiSecurity('api-key')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly auth: AuthService) {}

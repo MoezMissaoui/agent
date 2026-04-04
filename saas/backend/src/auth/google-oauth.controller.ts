@@ -1,7 +1,7 @@
 import { Controller, Get, Req, Res, UseGuards } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { Public } from './decorators/public.decorator';
@@ -9,6 +9,7 @@ import { Public } from './decorators/public.decorator';
 type GoogleUser = { identifier: string; email: string };
 
 @ApiTags('auth')
+@ApiSecurity('api-key')
 @Controller('auth')
 export class GoogleOAuthController {
   constructor(
