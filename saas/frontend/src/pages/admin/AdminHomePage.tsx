@@ -130,41 +130,40 @@ export function AdminHomePage() {
         <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm dark:border-slate-700/80 dark:bg-slate-900/80">
           <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Quick start</h2>
           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            Build assistants and attach knowledge — the main workflow is under Agents.
+            Build assistants and attach knowledge. Each row below is a link — click to open that section.
           </p>
           <ul className="mt-4 space-y-1">
-            <li>
-              <Link
-                to="/admin/agents"
-                className="block rounded-xl px-3 py-2.5 text-sm font-semibold text-primary transition hover:bg-primary/10 dark:hover:bg-primary/15"
-              >
-                Agents — create &amp; manage
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/admin/api-keys"
-                className="block rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800/80"
-              >
-                API access
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/admin/settings"
-                className="block rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800/80"
-              >
-                Workspace settings
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/admin/profile"
-                className="block rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800/80"
-              >
-                Profile
-              </Link>
-            </li>
+            {(
+              [
+                { to: '/admin/agents', label: 'Agents — create & manage', primary: true },
+                { to: '/admin/api-keys', label: 'API access', primary: false },
+                { to: '/admin/settings', label: 'Workspace settings', primary: false },
+                { to: '/admin/profile', label: 'Profile', primary: false },
+              ] as const
+            ).map((item) => (
+              <li key={item.to}>
+                <Link
+                  to={item.to}
+                  className={`group flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-sm transition ${
+                    item.primary
+                      ? 'font-semibold text-primary hover:bg-primary/10 hover:underline dark:hover:bg-primary/15'
+                      : 'font-medium text-primary hover:bg-primary/5 hover:underline dark:text-primary dark:hover:bg-primary/10'
+                  }`}
+                >
+                  <span>{item.label}</span>
+                  <svg
+                    className="size-4 shrink-0 text-primary/60 transition group-hover:text-primary group-hover:translate-x-0.5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    aria-hidden
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
+              </li>
+            ))}
           </ul>
         </div>
       </div>
