@@ -14,11 +14,11 @@ import { Document } from './document.entity';
 
 @Entity('agents')
 export class Agent {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn()
+  id: number;
 
-  @Column({ name: 'user_id' })
-  userId: string;
+  @Column({ name: 'user_id', type: 'int' })
+  userId: number;
 
   @ManyToOne(() => User, (u) => u.agents, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })

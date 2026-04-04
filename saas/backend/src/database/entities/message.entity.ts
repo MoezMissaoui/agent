@@ -11,11 +11,11 @@ import { ChatSession } from './chat-session.entity';
 
 @Entity('messages')
 export class Message {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn()
+  id: number;
 
-  @Column({ name: 'session_id' })
-  sessionId: string;
+  @Column({ name: 'session_id', type: 'int' })
+  sessionId: number;
 
   @ManyToOne(() => ChatSession, (s) => s.messages, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'session_id' })

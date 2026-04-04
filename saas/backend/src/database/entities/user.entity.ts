@@ -1,4 +1,6 @@
+import { randomUUID } from 'crypto';
 import {
+  BeforeInsert,
   Column,
   CreateDateColumn,
   Entity,
@@ -11,8 +13,12 @@ import { ApiKey } from './api-key.entity';
 
 @Entity('users')
 export class User {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  /** Identifiant public (JWT `sub`, API) — distinct de la clé primaire `id`. */
+  @Column({ name: 'identifier', type: 'varchar', length: 36, unique: true })
+  identifier: string;
 
   @Column({ unique: true })
   email: string;
@@ -43,4 +49,11 @@ export class User {
 
   @OneToMany(() => Agent, (a) => a.user)
   agents: Agent[];
+
+  @BeforeInsert()
+  ensureIdentifier() {
+    if (!this.identifier) {
+      this.identifier = randomUUID();
+    }
+  }
 }

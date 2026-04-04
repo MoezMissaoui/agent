@@ -44,7 +44,7 @@ export class AuthService {
       password: hash,
     });
     await this.users.save(user);
-    return this.issueTokenPair(user.id, user.email, false);
+    return this.issueTokenPair(user.identifier, user.email, false);
   }
 
   async login(dto: LoginDto) {
@@ -55,7 +55,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
     const remember = Boolean(dto.rememberMe);
-    return this.issueTokenPair(user.id, user.email, remember);
+    return this.issueTokenPair(user.identifier, user.email, remember);
   }
 
   async refresh(dto: RefreshDto) {
@@ -70,12 +70,12 @@ export class AuthService {
       if (payload.typ !== 'refresh') {
         throw new UnauthorizedException('Invalid refresh token');
       }
-      const user = await this.users.findOne({ where: { id: payload.sub } });
+      const user = await this.users.findOne({ where: { identifier: payload.sub } });
       if (!user) {
         throw new UnauthorizedException('User not found');
       }
       const remember = Boolean(payload.remember);
-      return this.issueTokenPair(user.id, user.email, remember);
+      return this.issueTokenPair(user.identifier, user.email, remember);
     } catch {
       throw new UnauthorizedException('Invalid refresh token');
     }

@@ -9,11 +9,11 @@ import { User } from './user.entity';
 
 @Entity('api_keys')
 export class ApiKey {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn()
+  id: number;
 
-  @Column({ name: 'user_id' })
-  userId: string;
+  @Column({ name: 'user_id', type: 'int' })
+  userId: number;
 
   @ManyToOne(() => User, (u) => u.apiKeys, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })

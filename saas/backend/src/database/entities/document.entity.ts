@@ -11,11 +11,11 @@ import { Agent } from './agent.entity';
 
 @Entity('documents')
 export class Document {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn()
+  id: number;
 
-  @Column({ name: 'agent_id' })
-  agentId: string;
+  @Column({ name: 'agent_id', type: 'int' })
+  agentId: number;
 
   @ManyToOne(() => Agent, (a) => a.documents, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'agent_id' })
