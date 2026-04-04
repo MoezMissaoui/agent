@@ -6,7 +6,6 @@ import { AdminAgentsPage } from './pages/admin/AdminAgentsPage';
 import { AdminHomePage } from './pages/admin/AdminHomePage';
 import { AdminApiKeysProductPage } from './pages/admin/AdminApiKeysProductPage';
 import { AdminProfilePage } from './pages/admin/AdminProfilePage';
-import { AdminTeamPage } from './pages/admin/AdminTeamPage';
 import { AdminWorkspaceSettingsPage } from './pages/admin/AdminWorkspaceSettingsPage';
 import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage';
 import { GoogleOAuthCallbackPage } from './pages/auth/GoogleOAuthCallbackPage';
@@ -39,7 +38,6 @@ function App() {
               <Route index element={<AdminHomePage />} />
               <Route path="agents" element={<AdminAgentsPage />} />
               <Route path="profile" element={<AdminProfilePage />} />
-              <Route path="users" element={<AdminTeamPage />} />
               <Route path="api-keys" element={<AdminApiKeysProductPage />} />
               <Route path="settings" element={<AdminWorkspaceSettingsPage />} />
             </Route>

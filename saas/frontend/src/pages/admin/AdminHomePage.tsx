@@ -143,14 +143,6 @@ export function AdminHomePage() {
             </li>
             <li>
               <Link
-                to="/admin/users"
-                className="block rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800/80"
-              >
-                Team
-              </Link>
-            </li>
-            <li>
-              <Link
                 to="/admin/api-keys"
                 className="block rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800/80"
               >

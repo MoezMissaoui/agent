@@ -13,7 +13,6 @@ const navItems: readonly {
 }[] = [
   { to: '/admin', end: true, label: 'Dashboard' },
   { to: '/admin/agents', label: 'Agents', core: true },
-  { to: '/admin/users', label: 'Team' },
   { to: '/admin/api-keys', label: 'API access' },
   { to: '/admin/settings', label: 'Settings' },
 ];
@@ -52,14 +51,6 @@ function IconAgents(props: { className?: string }) {
   );
 }
 
-function IconUsers(props: { className?: string }) {
-  return (
-    <svg className={props.className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
-    </svg>
-  );
-}
-
 function IconKey(props: { className?: string }) {
   return (
     <svg className={props.className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -77,7 +68,7 @@ function IconSettings(props: { className?: string }) {
   );
 }
 
-const navIcon = [IconDashboard, IconAgents, IconUsers, IconKey, IconSettings] as const;
+const navIcon = [IconDashboard, IconAgents, IconKey, IconSettings] as const;
 
 const SIDEBAR_COLLAPSED_KEY = 'synapse-admin-sidebar-collapsed';
 
@@ -257,7 +248,6 @@ export function AdminLayout() {
             >
               <IconMenu />
             </button>
-            <span className="truncate text-sm font-semibold text-slate-900 dark:text-white">Control Plane</span>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <ThemeToggle />
