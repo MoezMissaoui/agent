@@ -480,7 +480,7 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
                   How can I help?
                 </p>
                 <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
-                  Ask a question about your documents.
+                  Ask anything to get started — answers use your indexed content when relevant.
                 </p>
               </div>
               <p className="mb-3 text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
@@ -488,9 +488,9 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
               </p>
               <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-center">
                 {[
-                  'Summarize the key points in the document.',
-                  'What are the main themes?',
-                  'Are there important definitions?',
+                  'Can you give me a quick overview?',
+                  'What are the main ideas I should know?',
+                  'Explain this in simple terms.',
                 ].map((s) => (
                   <button
                     key={s}
