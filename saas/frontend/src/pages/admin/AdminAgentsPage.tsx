@@ -173,8 +173,8 @@ export function AdminAgentsPage() {
               Agents
             </h1>
             <p className="mt-1 max-w-xl text-sm text-slate-600 dark:text-slate-400">
-              Create and manage assistants for your workspace. Status controls whether an agent is available
-              for downstream features.
+              Create and manage assistants for your workspace. New agents start inactive; you can mark one
+              Active only after at least one document has completed ingestion.
             </p>
           </div>
           <Button type="button" onClick={openCreate} className="shrink-0 shadow-md shadow-primary/20">
@@ -320,15 +320,21 @@ export function AdminAgentsPage() {
                   />
                 </div>
                 {modal === 'edit' && (
-                  <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200/90 px-3 py-2.5 dark:border-slate-600">
-                    <input
-                      type="checkbox"
-                      className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
-                      checked={isActive}
-                      onChange={(e) => setIsActive(e.target.checked)}
-                    />
-                    <span className="text-sm text-slate-700 dark:text-slate-300">Active</span>
-                  </label>
+                  <div className="rounded-xl border border-slate-200/90 px-3 py-2.5 dark:border-slate-600">
+                    <label className="flex cursor-pointer items-center gap-3">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
+                        checked={isActive}
+                        onChange={(e) => setIsActive(e.target.checked)}
+                      />
+                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Active</span>
+                    </label>
+                    <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                      You can turn Active on only after at least one document has finished ingestion (indexed in
+                      the knowledge base).
+                    </p>
+                  </div>
                 )}
                 <FormFeedback variant="error" message={formError} />
                 <FormFeedback variant="success" message={formSuccess} />
