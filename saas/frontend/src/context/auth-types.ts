@@ -3,4 +3,5 @@ export type AuthUser = {
   email: string;
   username: string;
   emailVerified: boolean;
+  hasPassword: boolean;
 };

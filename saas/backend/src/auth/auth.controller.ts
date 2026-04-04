@@ -9,6 +9,8 @@ import { LoginDto } from './dto/login.dto';
 import { RefreshDto } from './dto/refresh.dto';
 import { RegisterDto } from './dto/register.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { SetPasswordDto } from './dto/set-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 
 type AuthedRequest = Express.Request & {
@@ -84,5 +86,21 @@ export class AuthController {
   @ApiOperation({ summary: 'Profil utilisateur connecté' })
   me(@Req() req: AuthedRequest) {
     return this.auth.getMe(req.user.userId);
+  }
+
+  @Post('change-password')
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Changer le mot de passe (utilisateur connecté)' })
+  changePassword(@Req() req: AuthedRequest, @Body() dto: ChangePasswordDto) {
+    return this.auth.changePassword(req.user.userId, dto);
+  }
+
+  @Post('set-password')
+  @ApiBearerAuth('access-token')
+  @ApiOperation({
+    summary: 'Définir un mot de passe (compte sans mot de passe, ex. Google)',
+  })
+  setPassword(@Req() req: AuthedRequest, @Body() dto: SetPasswordDto) {
+    return this.auth.setPassword(req.user.userId, dto);
   }
 }

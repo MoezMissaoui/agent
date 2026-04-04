@@ -81,13 +81,39 @@ export async function meRequest(): Promise<{
   email: string;
   username: string;
   emailVerified: boolean;
+  hasPassword: boolean;
 }> {
   const { data } = await api.get<{
     userId: string;
     email: string;
     username: string;
     emailVerified: boolean;
+    hasPassword: boolean;
   }>(`${base}/me`);
+  return data;
+}
+
+export async function changePasswordRequest(
+  currentPassword: string,
+  newPassword: string,
+  confirmNewPassword: string,
+): Promise<{ message: string }> {
+  const { data } = await api.post<{ message: string }>(`${base}/change-password`, {
+    currentPassword,
+    newPassword,
+    confirmNewPassword,
+  });
+  return data;
+}
+
+export async function setPasswordRequest(
+  newPassword: string,
+  confirmNewPassword: string,
+): Promise<{ message: string }> {
+  const { data } = await api.post<{ message: string }>(`${base}/set-password`, {
+    newPassword,
+    confirmNewPassword,
+  });
   return data;
 }
 

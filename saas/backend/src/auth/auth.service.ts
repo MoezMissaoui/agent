@@ -20,6 +20,8 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshDto } from './dto/refresh.dto';
 import { RegisterDto } from './dto/register.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { SetPasswordDto } from './dto/set-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { MailService, shouldUseSmtpMail } from './mail/mail.service';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
@@ -74,6 +76,52 @@ export class AuthService {
       email: user.email,
       username: user.username,
       emailVerified: Boolean(user.emailVerifiedAt),
+      hasPassword: Boolean(user.password),
+    };
+  }
+
+  async changePassword(identifier: string, dto: ChangePasswordDto) {
+    if (dto.newPassword !== dto.confirmNewPassword) {
+      throw new BadRequestException('New passwords do not match');
+    }
+    const user = await this.users.findOne({ where: { identifier } });
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+    if (!user.password) {
+      throw new BadRequestException(
+        'This account uses Google sign-in. Password cannot be changed here.',
+      );
+    }
+    if (!(await bcrypt.compare(dto.currentPassword, user.password))) {
+      throw new UnauthorizedException('Current password is incorrect');
+    }
+    if (dto.newPassword === dto.currentPassword) {
+      throw new BadRequestException('New password must be different from your current password');
+    }
+    user.password = await bcrypt.hash(dto.newPassword, BCRYPT_ROUNDS);
+    await this.users.save(user);
+    return { message: 'Password updated successfully' };
+  }
+
+  async setPassword(identifier: string, dto: SetPasswordDto) {
+    if (dto.newPassword !== dto.confirmNewPassword) {
+      throw new BadRequestException('New passwords do not match');
+    }
+    const user = await this.users.findOne({ where: { identifier } });
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+    if (user.password) {
+      throw new BadRequestException(
+        'A password is already set. Use change password to update it.',
+      );
+    }
+    user.password = await bcrypt.hash(dto.newPassword, BCRYPT_ROUNDS);
+    await this.users.save(user);
+    return {
+      message:
+        'Password set successfully. You can now sign in with email and password.',
     };
   }
 
