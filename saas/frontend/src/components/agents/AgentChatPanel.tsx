@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   createChatSession,
+  deleteChatSession,
   getChatSessionMessages,
   getChatStatus,
   listChatSessions,
@@ -53,6 +54,17 @@ function AssistantBubbleIcon() {
   );
 }
 
+function formatSessionLabel(iso: string) {
+  try {
+    return new Date(iso).toLocaleString(undefined, {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    });
+  } catch {
+    return iso;
+  }
+}
+
 function TypingIndicator() {
   return (
     <div className="flex items-center gap-1 px-1 py-2" aria-live="polite" aria-label="L’assistant répond">
@@ -95,6 +107,7 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const loadStatus = useCallback(async () => {
     setStatusError(null);
@@ -190,6 +203,26 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
       await loadSessions();
     } catch (e) {
       setActionError(getRequestErrorMessage(e));
+    }
+  };
+
+  const onDeleteSession = async (sessionId: string) => {
+    if (!window.confirm('Supprimer cette conversation et tout son historique ?')) {
+      return;
+    }
+    setActionError(null);
+    setDeletingId(sessionId);
+    try {
+      await deleteChatSession(agentId, sessionId);
+      if (selectedSessionId === sessionId) {
+        setSelectedSessionId(null);
+        setMessages([]);
+      }
+      await loadSessions();
+    } catch (e) {
+      setActionError(getRequestErrorMessage(e));
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -305,52 +338,98 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
     <div
       className={`${shellGap} flex ${chatSize} flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm dark:border-slate-700/80 dark:bg-slate-950/50`}
     >
-      {/* Barre d’outils */}
-      <div className="flex flex-shrink-0 flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-3 py-2.5 dark:border-slate-800 sm:px-4">
-        <div>
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Chat</h3>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400">Réponses basées sur vos documents indexés</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <label className="sr-only" htmlFor={`chat-session-${agentId}`}>
-            Conversation
-          </label>
-          <select
-            id={`chat-session-${agentId}`}
-            className="max-w-[11rem] cursor-pointer rounded-xl border-0 bg-slate-100 py-2 pl-3 pr-8 text-xs font-medium text-slate-800 shadow-sm ring-1 ring-slate-200/80 focus:outline-none focus:ring-2 focus:ring-primary/40 dark:bg-slate-800 dark:text-slate-100 dark:ring-slate-700"
-            value={selectedSessionId ?? ''}
-            onChange={(e) => setSelectedSessionId(e.target.value || null)}
-            disabled={sessionsLoading || sessions.length === 0}
-          >
-            {sessions.length === 0 ? (
-              <option value="">Aucune conversation</option>
+      <div className="flex min-h-0 flex-1 flex-row overflow-hidden">
+        <aside
+          className="flex w-[min(100%,16rem)] shrink-0 flex-col border-r border-slate-200 bg-slate-50/95 dark:border-slate-800 dark:bg-slate-900/60 lg:w-72"
+          aria-label="Conversations"
+        >
+          <div className="flex-shrink-0 border-b border-slate-200 px-3 py-3 dark:border-slate-800">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              Conversations
+            </p>
+            <Button
+              type="button"
+              variant="ghost"
+              className="mt-2 w-full !rounded-xl !px-3 !py-2 text-xs font-medium"
+              onClick={() => void onNewSession()}
+              disabled={sessionsLoading}
+            >
+              + Nouvelle conversation
+            </Button>
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto p-2">
+            {sessionsLoading ? (
+              <p className="px-2 py-4 text-center text-[11px] text-slate-500">Chargement…</p>
+            ) : sessions.length === 0 ? (
+              <p className="px-2 py-4 text-center text-[11px] leading-relaxed text-slate-500">
+                Aucune conversation. Créez-en une pour commencer.
+              </p>
             ) : (
-              sessions.map((s, i) => (
-                <option key={s.sessionId} value={s.sessionId}>
-                  {`Conversation ${sessions.length - i}`}
-                </option>
-              ))
+              <ul className="space-y-1">
+                {sessions.map((s, i) => (
+                  <li key={s.sessionId}>
+                    <div
+                      className={`flex items-stretch gap-0.5 overflow-hidden rounded-xl border transition ${
+                        selectedSessionId === s.sessionId
+                          ? 'border-primary/40 bg-primary/10 dark:bg-primary/15'
+                          : 'border-transparent hover:bg-slate-100 dark:hover:bg-slate-800/80'
+                      }`}
+                    >
+                      <button
+                        type="button"
+                        className="min-w-0 flex-1 px-2.5 py-2.5 text-left"
+                        onClick={() => setSelectedSessionId(s.sessionId)}
+                      >
+                        <span className="block text-[11px] font-medium text-slate-800 dark:text-slate-100">
+                          Conversation {sessions.length - i}
+                        </span>
+                        <span className="mt-0.5 block truncate text-[10px] text-slate-500 dark:text-slate-400">
+                          {formatSessionLabel(s.updatedAt)}
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        className="flex w-9 shrink-0 items-center justify-center rounded-r-lg text-slate-400 transition hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400"
+                        disabled={deletingId === s.sessionId}
+                        aria-label="Supprimer la conversation"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void onDeleteSession(s.sessionId);
+                        }}
+                      >
+                        {deletingId === s.sessionId ? (
+                          <motion.div
+                            className="h-3.5 w-3.5 rounded-full border-2 border-current border-t-transparent"
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 0.7, repeat: Infinity, ease: 'linear' }}
+                          />
+                        ) : (
+                          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
             )}
-          </select>
-          <Button
-            type="button"
-            variant="ghost"
-            className="!rounded-xl !px-3 !py-2 text-xs font-medium"
-            onClick={() => void onNewSession()}
-            disabled={sessionsLoading}
-          >
-            + Nouvelle conversation
-          </Button>
-        </div>
-      </div>
+          </div>
+        </aside>
 
-      {sessionsError && (
-        <p className="border-b border-amber-100 bg-amber-50/90 px-4 py-2 text-xs text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-200">
-          {sessionsError}
-        </p>
-      )}
+        <div className="flex min-w-0 flex-1 flex-col">
+          {sessionsError && (
+            <p className="border-b border-amber-100 bg-amber-50/90 px-3 py-2 text-xs text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-200">
+              {sessionsError}
+            </p>
+          )}
 
-      {/* Zone messages */}
+          {/* Zone messages */}
       <div className="relative flex min-h-0 flex-1 flex-col bg-slate-50/80 dark:bg-slate-900/30">
         <div className="min-h-0 flex-1 overflow-y-auto px-2 py-4 sm:px-4">
           {messagesLoading ? (
@@ -473,6 +552,8 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
               L’historique est sauvegardé par conversation. Les réponses peuvent être imprécises : vérifiez les sources.
             </p>
           </form>
+        </div>
+      </div>
         </div>
       </div>
     </div>

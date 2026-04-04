@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   Param,
@@ -76,6 +77,21 @@ export class AgentChatController {
     @Param('sessionId', new ParseUUIDPipe({ version: '4' })) sessionId: string,
   ) {
     return this.chat.getSessionMessages(req.user.userId, agentId, sessionId);
+  }
+
+  @Delete('sessions/:sessionId')
+  @HttpCode(204)
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Supprimer une session de chat et ses messages' })
+  @ApiResponse({ status: 204, description: 'No content' })
+  @ApiResponse({ status: 403, description: 'Chat désactivé' })
+  @ApiResponse({ status: 404, description: 'Session introuvable' })
+  deleteSession(
+    @Req() req: AuthedRequest,
+    @Param('agentId', new ParseUUIDPipe({ version: '4' })) agentId: string,
+    @Param('sessionId', new ParseUUIDPipe({ version: '4' })) sessionId: string,
+  ) {
+    return this.chat.deleteSession(req.user.userId, agentId, sessionId);
   }
 
   @Post('sessions/:sessionId/messages')

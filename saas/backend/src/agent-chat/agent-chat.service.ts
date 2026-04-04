@@ -223,6 +223,23 @@ export class AgentChatService {
     };
   }
 
+  async deleteSession(
+    userIdentifier: string,
+    agentUuid: string,
+    sessionUuid: string,
+  ): Promise<void> {
+    const agent = await this.resolveAgent(userIdentifier, agentUuid);
+    await this.assertChatEnabled(agent.id);
+    const session = await this.sessions.findOne({
+      where: { agentId: agent.id, identifier: sessionUuid },
+    });
+    if (!session) {
+      throw new NotFoundException('Chat session not found');
+    }
+    await this.messages.delete({ sessionId: session.id });
+    await this.sessions.delete({ id: session.id });
+  }
+
   private async resolveAgent(userIdentifier: string, agentUuid: string): Promise<Agent> {
     const user = await this.users.findOne({ where: { identifier: userIdentifier } });
     if (!user) {

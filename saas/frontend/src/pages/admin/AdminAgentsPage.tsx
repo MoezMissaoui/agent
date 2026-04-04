@@ -370,7 +370,7 @@ export function AdminAgentsPage() {
       <AnimatePresence>
         {chatModalAgent && (
           <motion.div
-            className="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-4"
+            className="fixed inset-0 z-[70] flex justify-end"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -378,19 +378,20 @@ export function AdminAgentsPage() {
           >
             <button
               type="button"
-              className="absolute inset-0 bg-slate-900/55 backdrop-blur-[2px]"
+              className="absolute inset-0 bg-slate-900/50 backdrop-blur-[1px]"
               aria-label="Fermer le chat"
               onClick={() => setChatModalAgent(null)}
             />
             <motion.div
+              key={chatModalAgent.agentId}
               role="dialog"
               aria-modal="true"
               aria-labelledby="chat-modal-title"
-              initial={{ opacity: 0, scale: 0.97, y: 12 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.97, y: 12 }}
-              transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-              className="relative z-10 flex h-[min(90vh,880px)] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-2xl dark:border-slate-700/80 dark:bg-slate-900"
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'tween', duration: 0.32, ease: [0.32, 0.72, 0, 1] }}
+              className="relative z-10 flex h-full w-[min(100vw,1200px)] max-w-[100vw] flex-col overflow-hidden border-l border-slate-200/90 bg-white shadow-[-8px_0_40px_-12px_rgba(0,0,0,0.25)] dark:border-slate-700/80 dark:bg-slate-900 dark:shadow-[-8px_0_40px_-12px_rgba(0,0,0,0.5)] sm:max-w-[min(100vw-1rem,1200px)]"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex flex-shrink-0 items-start justify-between gap-3 border-b border-slate-100 px-4 py-3 dark:border-slate-800 sm:px-5">

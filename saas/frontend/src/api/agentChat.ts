@@ -35,6 +35,10 @@ export async function createChatSession(agentId: string): Promise<{ sessionId: s
   return data;
 }
 
+export async function deleteChatSession(agentId: string, sessionId: string): Promise<void> {
+  await api.delete(`${base(agentId)}/sessions/${encodeURIComponent(sessionId)}`);
+}
+
 export async function getChatSessionMessages(
   agentId: string,
   sessionId: string,
