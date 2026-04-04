@@ -108,6 +108,8 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
   const [sending, setSending] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  /** Modal only: hide conversations column for full-width chat. */
+  const [modalSidebarCollapsed, setModalSidebarCollapsed] = useState(false);
 
   const loadStatus = useCallback(async () => {
     setStatusError(null);
@@ -164,6 +166,10 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
   useEffect(() => {
     void loadStatus();
   }, [agentId, refreshKey, loadStatus]);
+
+  useEffect(() => {
+    setModalSidebarCollapsed(false);
+  }, [agentId]);
 
   useEffect(() => {
     if (!chatEnabled) {
@@ -369,90 +375,242 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
       }`}
     >
       <div className="flex min-h-0 flex-1 flex-row overflow-hidden">
-        <aside
-          className="flex w-[min(100%,16rem)] shrink-0 flex-col border-r border-slate-200 bg-slate-50/95 dark:border-slate-800 dark:bg-slate-900/60 lg:w-72"
-          aria-label="Conversations"
-        >
-          <div className="flex-shrink-0 border-b border-slate-200 px-3 py-3 dark:border-slate-800">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              Conversations
-            </p>
-            <Button
-              type="button"
-              variant="ghost"
-              className="mt-2 w-full !rounded-xl !px-3 !py-2 text-xs font-medium"
-              onClick={() => void onNewSession()}
-              disabled={sessionsLoading}
+        {isModal ? (
+          <motion.aside
+            initial={false}
+            animate={{ width: modalSidebarCollapsed ? 48 : 288 }}
+            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+            className="relative h-full min-h-0 shrink-0 overflow-hidden border-r border-slate-200 bg-slate-50/95 dark:border-slate-800 dark:bg-slate-900/60"
+            aria-label="Conversations"
+          >
+            <div
+              className={`absolute inset-y-0 left-0 z-10 flex w-12 flex-col items-center gap-1 py-2 transition-opacity duration-200 ease-out ${
+                modalSidebarCollapsed ? 'opacity-100' : 'pointer-events-none opacity-0'
+              }`}
+              aria-hidden={!modalSidebarCollapsed}
             >
-              + New conversation
-            </Button>
-          </div>
-          <div className="min-h-0 flex-1 overflow-y-auto p-2">
-            {sessionsLoading ? (
-              <p className="px-2 py-4 text-center text-[11px] text-slate-500">Loading…</p>
-            ) : sessions.length === 0 ? (
-              <p className="px-2 py-4 text-center text-[11px] leading-relaxed text-slate-500">
-                No conversations yet. Start one to begin.
-              </p>
-            ) : (
-              <ul className="space-y-1">
-                {sessions.map((s, i) => (
-                  <li key={s.sessionId}>
-                    <div
-                      className={`flex items-stretch gap-0.5 overflow-hidden rounded-xl border transition ${
-                        selectedSessionId === s.sessionId
-                          ? 'border-primary/40 bg-primary/10 dark:bg-primary/15'
-                          : 'border-transparent hover:bg-slate-100 dark:hover:bg-slate-800/80'
-                      }`}
+              <button
+                type="button"
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-800"
+                aria-label="Expand conversations"
+                aria-expanded={false}
+                title="Show conversations"
+                onClick={() => setModalSidebarCollapsed(false)}
+              >
+                <svg
+                  className="h-5 w-5 rotate-180 transition-transform duration-200 ease-out"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  aria-hidden
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 6l-6 6 6 6" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-primary transition hover:bg-primary/10 dark:hover:bg-primary/15"
+                aria-label="New conversation"
+                title="New conversation"
+                onClick={() => void onNewSession()}
+                disabled={sessionsLoading}
+              >
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+              </button>
+            </div>
+            <div
+              className={`absolute inset-y-0 left-0 flex w-72 min-w-72 flex-col transition-opacity duration-200 ease-out ${
+                modalSidebarCollapsed ? 'pointer-events-none opacity-0' : 'opacity-100'
+              }`}
+              aria-hidden={modalSidebarCollapsed}
+            >
+              <div className="flex-shrink-0 border-b border-slate-200 px-3 py-3 dark:border-slate-800">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="min-w-0 pt-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                    Conversations
+                  </p>
+                  <button
+                    type="button"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-200 dark:hover:bg-slate-800 dark:text-slate-400"
+                    aria-label="Minimize conversations"
+                    aria-expanded
+                    title="Hide conversations"
+                    onClick={() => setModalSidebarCollapsed(true)}
+                  >
+                    <svg
+                      className="h-5 w-5 transition-transform duration-200 ease-out"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      aria-hidden
                     >
-                      <button
-                        type="button"
-                        className="min-w-0 flex-1 px-2.5 py-2.5 text-left"
-                        onClick={() => setSelectedSessionId(s.sessionId)}
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 6l-6 6 6 6" />
+                    </svg>
+                  </button>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="mt-2 w-full !rounded-xl !px-3 !py-2 text-xs font-medium"
+                  onClick={() => void onNewSession()}
+                  disabled={sessionsLoading}
+                >
+                  + New conversation
+                </Button>
+              </div>
+              <div className="min-h-0 flex-1 overflow-y-auto p-2">
+                {sessionsLoading ? (
+                  <p className="px-2 py-4 text-center text-[11px] text-slate-500">Loading…</p>
+                ) : sessions.length === 0 ? (
+                  <p className="px-2 py-4 text-center text-[11px] leading-relaxed text-slate-500">
+                    No conversations yet. Start one to begin.
+                  </p>
+                ) : (
+                  <ul className="space-y-1">
+                    {sessions.map((s, i) => (
+                      <li key={s.sessionId}>
+                        <div
+                          className={`flex items-stretch gap-0.5 overflow-hidden rounded-xl border transition ${
+                            selectedSessionId === s.sessionId
+                              ? 'border-primary/40 bg-primary/10 dark:bg-primary/15'
+                              : 'border-transparent hover:bg-slate-100 dark:hover:bg-slate-800/80'
+                          }`}
+                        >
+                          <button
+                            type="button"
+                            className="min-w-0 flex-1 px-2.5 py-2.5 text-left"
+                            onClick={() => setSelectedSessionId(s.sessionId)}
+                          >
+                            <span className="block text-[11px] font-medium text-slate-800 dark:text-slate-100">
+                              Conversation {sessions.length - i}
+                            </span>
+                            <span className="mt-0.5 block truncate text-[10px] text-slate-500 dark:text-slate-400">
+                              {formatSessionLabel(s.updatedAt)}
+                            </span>
+                          </button>
+                          <button
+                            type="button"
+                            className="flex w-9 shrink-0 items-center justify-center rounded-r-lg text-slate-400 transition hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400"
+                            disabled={deletingId === s.sessionId}
+                            aria-label="Delete conversation"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              void onDeleteSession(s.sessionId);
+                            }}
+                          >
+                            {deletingId === s.sessionId ? (
+                              <motion.div
+                                className="h-3.5 w-3.5 rounded-full border-2 border-current border-t-transparent"
+                                animate={{ rotate: 360 }}
+                                transition={{ duration: 0.7, repeat: Infinity, ease: 'linear' }}
+                              />
+                            ) : (
+                              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                />
+                              </svg>
+                            )}
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          </motion.aside>
+        ) : (
+          <aside
+            className="flex w-[min(100%,16rem)] shrink-0 flex-col border-r border-slate-200 bg-slate-50/95 dark:border-slate-800 dark:bg-slate-900/60 lg:w-72"
+            aria-label="Conversations"
+          >
+            <div className="flex-shrink-0 border-b border-slate-200 px-3 py-3 dark:border-slate-800">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                Conversations
+              </p>
+              <Button
+                type="button"
+                variant="ghost"
+                className="mt-2 w-full !rounded-xl !px-3 !py-2 text-xs font-medium"
+                onClick={() => void onNewSession()}
+                disabled={sessionsLoading}
+              >
+                + New conversation
+              </Button>
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto p-2">
+              {sessionsLoading ? (
+                <p className="px-2 py-4 text-center text-[11px] text-slate-500">Loading…</p>
+              ) : sessions.length === 0 ? (
+                <p className="px-2 py-4 text-center text-[11px] leading-relaxed text-slate-500">
+                  No conversations yet. Start one to begin.
+                </p>
+              ) : (
+                <ul className="space-y-1">
+                  {sessions.map((s, i) => (
+                    <li key={s.sessionId}>
+                      <div
+                        className={`flex items-stretch gap-0.5 overflow-hidden rounded-xl border transition ${
+                          selectedSessionId === s.sessionId
+                            ? 'border-primary/40 bg-primary/10 dark:bg-primary/15'
+                            : 'border-transparent hover:bg-slate-100 dark:hover:bg-slate-800/80'
+                        }`}
                       >
-                        <span className="block text-[11px] font-medium text-slate-800 dark:text-slate-100">
-                          Conversation {sessions.length - i}
-                        </span>
-                        <span className="mt-0.5 block truncate text-[10px] text-slate-500 dark:text-slate-400">
-                          {formatSessionLabel(s.updatedAt)}
-                        </span>
-                      </button>
-                      <button
-                        type="button"
-                        className="flex w-9 shrink-0 items-center justify-center rounded-r-lg text-slate-400 transition hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400"
-                        disabled={deletingId === s.sessionId}
-                        aria-label="Delete conversation"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          void onDeleteSession(s.sessionId);
-                        }}
-                      >
-                        {deletingId === s.sessionId ? (
-                          <motion.div
-                            className="h-3.5 w-3.5 rounded-full border-2 border-current border-t-transparent"
-                            animate={{ rotate: 360 }}
-                            transition={{ duration: 0.7, repeat: Infinity, ease: 'linear' }}
-                          />
-                        ) : (
-                          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        <button
+                          type="button"
+                          className="min-w-0 flex-1 px-2.5 py-2.5 text-left"
+                          onClick={() => setSelectedSessionId(s.sessionId)}
+                        >
+                          <span className="block text-[11px] font-medium text-slate-800 dark:text-slate-100">
+                            Conversation {sessions.length - i}
+                          </span>
+                          <span className="mt-0.5 block truncate text-[10px] text-slate-500 dark:text-slate-400">
+                            {formatSessionLabel(s.updatedAt)}
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          className="flex w-9 shrink-0 items-center justify-center rounded-r-lg text-slate-400 transition hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400"
+                          disabled={deletingId === s.sessionId}
+                          aria-label="Delete conversation"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            void onDeleteSession(s.sessionId);
+                          }}
+                        >
+                          {deletingId === s.sessionId ? (
+                            <motion.div
+                              className="h-3.5 w-3.5 rounded-full border-2 border-current border-t-transparent"
+                              animate={{ rotate: 360 }}
+                              transition={{ duration: 0.7, repeat: Infinity, ease: 'linear' }}
                             />
-                          </svg>
-                        )}
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </aside>
+                          ) : (
+                            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                              />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </aside>
+        )}
 
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           {sessionsError && (
             <p className="border-b border-amber-100 bg-amber-50/90 px-3 py-2 text-xs text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-200">
               {sessionsError}
