@@ -252,12 +252,17 @@ export function AdminLayout() {
                   role="menu"
                   className="absolute right-0 top-[calc(100%+6px)] z-50 min-w-[200px] rounded-xl border border-slate-200/90 bg-white py-1 shadow-lg dark:border-slate-700/80 dark:bg-slate-900"
                 >
-                  <div className="border-b border-slate-100 px-3 py-2 dark:border-slate-700">
+                  <Link
+                    to="/admin/profile"
+                    role="menuitem"
+                    className="block border-b border-slate-100 px-3 py-2 transition hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800/80"
+                    onClick={() => setProfileOpen(false)}
+                  >
                     <p className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
                       @{user?.username}
                     </p>
                     <p className="truncate text-xs text-slate-500 dark:text-slate-400">{user?.email}</p>
-                  </div>
+                  </Link>
                   <button
                     type="button"
                     role="menuitem"

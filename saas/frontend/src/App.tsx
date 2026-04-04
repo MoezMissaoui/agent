@@ -4,6 +4,7 @@ import { AdminLayout } from './layouts/AdminLayout';
 import { AnimatedLayout } from './layouts/AnimatedLayout';
 import { AdminHomePage } from './pages/admin/AdminHomePage';
 import { AdminPlaceholderPage } from './pages/admin/AdminPlaceholderPage';
+import { AdminProfilePage } from './pages/admin/AdminProfilePage';
 import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage';
 import { GoogleOAuthCallbackPage } from './pages/auth/GoogleOAuthCallbackPage';
 import { LoginPage } from './pages/auth/LoginPage';
@@ -33,6 +34,7 @@ function App() {
               }
             >
               <Route index element={<AdminHomePage />} />
+              <Route path="profile" element={<AdminProfilePage />} />
               <Route
                 path="users"
                 element={<AdminPlaceholderPage title="Users" description="Manage accounts, roles, and invitations." />}
