@@ -1,4 +1,6 @@
+import { randomUUID } from 'crypto';
 import {
+  BeforeInsert,
   Column,
   Entity,
   JoinColumn,
@@ -12,6 +14,9 @@ export class ApiKey {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Column({ name: 'identifier', type: 'varchar', length: 36, unique: true })
+  identifier: string;
+
   @Column({ name: 'user_id', type: 'int' })
   userId: number;
 
@@ -24,4 +29,11 @@ export class ApiKey {
 
   @Column({ name: 'is_active', default: true })
   isActive: boolean;
+
+  @BeforeInsert()
+  ensureIdentifier() {
+    if (!this.identifier) {
+      this.identifier = randomUUID();
+    }
+  }
 }

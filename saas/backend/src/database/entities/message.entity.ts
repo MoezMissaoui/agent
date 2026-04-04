@@ -1,4 +1,6 @@
+import { randomUUID } from 'crypto';
 import {
+  BeforeInsert,
   Column,
   CreateDateColumn,
   Entity,
@@ -13,6 +15,9 @@ import { ChatSession } from './chat-session.entity';
 export class Message {
   @PrimaryGeneratedColumn()
   id: number;
+
+  @Column({ name: 'identifier', type: 'varchar', length: 36, unique: true })
+  identifier: string;
 
   @Column({ name: 'session_id', type: 'int' })
   sessionId: number;
@@ -33,4 +38,11 @@ export class Message {
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
+
+  @BeforeInsert()
+  ensureIdentifier() {
+    if (!this.identifier) {
+      this.identifier = randomUUID();
+    }
+  }
 }

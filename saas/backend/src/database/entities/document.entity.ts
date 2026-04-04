@@ -1,4 +1,6 @@
+import { randomUUID } from 'crypto';
 import {
+  BeforeInsert,
   Column,
   CreateDateColumn,
   Entity,
@@ -13,6 +15,9 @@ import { Agent } from './agent.entity';
 export class Document {
   @PrimaryGeneratedColumn()
   id: number;
+
+  @Column({ name: 'identifier', type: 'varchar', length: 36, unique: true })
+  identifier: string;
 
   @Column({ name: 'agent_id', type: 'int' })
   agentId: number;
@@ -34,4 +39,11 @@ export class Document {
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
+
+  @BeforeInsert()
+  ensureIdentifier() {
+    if (!this.identifier) {
+      this.identifier = randomUUID();
+    }
+  }
 }

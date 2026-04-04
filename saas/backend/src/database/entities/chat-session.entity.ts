@@ -1,4 +1,6 @@
+import { randomUUID } from 'crypto';
 import {
+  BeforeInsert,
   Column,
   CreateDateColumn,
   Entity,
@@ -16,6 +18,9 @@ export class ChatSession {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Column({ name: 'identifier', type: 'varchar', length: 36, unique: true })
+  identifier: string;
+
   @Column({ name: 'agent_id', type: 'int' })
   agentId: number;
 
@@ -31,4 +36,11 @@ export class ChatSession {
 
   @OneToMany(() => Message, (m) => m.session)
   messages: Message[];
+
+  @BeforeInsert()
+  ensureIdentifier() {
+    if (!this.identifier) {
+      this.identifier = randomUUID();
+    }
+  }
 }
