@@ -65,6 +65,27 @@ function formatSessionLabel(iso: string) {
   }
 }
 
+function IconMenu(props: { className?: string }) {
+  return (
+    <svg className={props.className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+      <path d="M4 6h16M4 12h16M4 18h16" />
+    </svg>
+  );
+}
+
+function useMediaQueryMd() {
+  const [isMd, setIsMd] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia('(min-width: 768px)').matches : false,
+  );
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 768px)');
+    const fn = () => setIsMd(mq.matches);
+    mq.addEventListener('change', fn);
+    return () => mq.removeEventListener('change', fn);
+  }, []);
+  return isMd;
+}
+
 function TypingIndicator() {
   return (
     <div className="flex items-center gap-1 px-1 py-2" aria-live="polite" aria-label="Assistant is responding">
@@ -108,8 +129,11 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
   const [sending, setSending] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  /** Modal only: hide conversations column for full-width chat. */
+  /** Modal only: hide conversations column for full-width chat (desktop). */
   const [modalSidebarCollapsed, setModalSidebarCollapsed] = useState(false);
+  /** Modal + mobile: conversations drawer over chat (like admin menu). */
+  const [mobileConvOpen, setMobileConvOpen] = useState(false);
+  const isMd = useMediaQueryMd();
 
   const loadStatus = useCallback(async () => {
     setStatusError(null);
@@ -169,7 +193,14 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
 
   useEffect(() => {
     setModalSidebarCollapsed(false);
+    setMobileConvOpen(false);
   }, [agentId]);
+
+  useEffect(() => {
+    if (isMd) {
+      setMobileConvOpen(false);
+    }
+  }, [isMd]);
 
   useEffect(() => {
     if (!chatEnabled) {
@@ -207,6 +238,9 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
       setSelectedSessionId(sessionId);
       setMessages([]);
       await loadSessions();
+      if (isModal && !isMd) {
+        setMobileConvOpen(false);
+      }
     } catch (e) {
       setActionError(getRequestErrorMessage(e));
     }
@@ -374,17 +408,30 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
           : 'rounded-2xl border border-slate-200/90 bg-white shadow-sm dark:border-slate-700/80 dark:bg-slate-950/50'
       }`}
     >
-      <div className="flex min-h-0 flex-1 flex-row overflow-hidden">
+      <div className="relative flex min-h-0 flex-1 flex-row overflow-hidden">
+        {isModal && !isMd && mobileConvOpen ? (
+          <button
+            type="button"
+            className="absolute inset-0 z-[55] bg-black/40"
+            aria-label="Close conversations"
+            onClick={() => setMobileConvOpen(false)}
+          />
+        ) : null}
         {isModal ? (
           <motion.aside
             initial={false}
-            animate={{ width: modalSidebarCollapsed ? 48 : 288 }}
+            animate={
+              isMd
+                ? { width: modalSidebarCollapsed ? 48 : 288, x: 0 }
+                : { x: mobileConvOpen ? 0 : -288, width: 288 }
+            }
             transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-            className="relative h-full min-h-0 shrink-0 overflow-hidden border-r border-slate-200 bg-slate-50/95 dark:border-slate-800 dark:bg-slate-900/60"
+            className="h-full min-h-0 shrink-0 overflow-hidden border-r border-slate-200 bg-slate-50/95 dark:border-slate-800 dark:bg-slate-900/60 max-md:absolute max-md:inset-y-0 max-md:left-0 max-md:z-[60] max-md:w-72 max-md:max-w-[min(18rem,85vw)] max-md:bg-white max-md:dark:bg-slate-900 max-md:shadow-xl md:relative md:z-auto md:shadow-none"
             aria-label="Conversations"
+            aria-hidden={!isMd && !mobileConvOpen ? true : undefined}
           >
             <div
-              className={`absolute inset-y-0 left-0 z-10 flex w-12 flex-col items-center gap-1 py-2 transition-opacity duration-200 ease-out ${
+              className={`absolute inset-y-0 left-0 z-10 hidden w-12 flex-col items-center gap-1 py-2 transition-opacity duration-200 ease-out md:flex ${
                 modalSidebarCollapsed ? 'opacity-100' : 'pointer-events-none opacity-0'
               }`}
               aria-hidden={!modalSidebarCollapsed}
@@ -422,9 +469,15 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
             </div>
             <div
               className={`absolute inset-y-0 left-0 flex w-72 min-w-72 flex-col transition-opacity duration-200 ease-out ${
-                modalSidebarCollapsed ? 'pointer-events-none opacity-0' : 'opacity-100'
+                !isMd
+                  ? mobileConvOpen
+                    ? 'opacity-100'
+                    : 'pointer-events-none opacity-0'
+                  : modalSidebarCollapsed
+                    ? 'pointer-events-none opacity-0'
+                    : 'opacity-100'
               }`}
-              aria-hidden={modalSidebarCollapsed}
+              aria-hidden={isMd ? modalSidebarCollapsed : !mobileConvOpen}
             >
               <div className="flex-shrink-0 border-b border-slate-200 px-3 py-3 dark:border-slate-800">
                 <div className="flex items-start justify-between gap-2">
@@ -437,7 +490,13 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
                     aria-label="Minimize conversations"
                     aria-expanded
                     title="Hide conversations"
-                    onClick={() => setModalSidebarCollapsed(true)}
+                    onClick={() => {
+                      if (isMd) {
+                        setModalSidebarCollapsed(true);
+                      } else {
+                        setMobileConvOpen(false);
+                      }
+                    }}
                   >
                     <svg
                       className="h-5 w-5 transition-transform duration-200 ease-out"
@@ -481,7 +540,12 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
                           <button
                             type="button"
                             className="min-w-0 flex-1 px-2.5 py-2.5 text-left"
-                            onClick={() => setSelectedSessionId(s.sessionId)}
+                            onClick={() => {
+                              setSelectedSessionId(s.sessionId);
+                              if (!isMd) {
+                                setMobileConvOpen(false);
+                              }
+                            }}
                           >
                             <span className="block text-[11px] font-medium text-slate-800 dark:text-slate-100">
                               Conversation {sessions.length - i}
@@ -611,6 +675,19 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
         )}
 
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+          {isModal && !isMd ? (
+            <div className="flex shrink-0 items-center gap-2 border-b border-slate-200/80 bg-slate-50/95 px-2 py-2 dark:border-slate-800 dark:bg-slate-900/40">
+              <button
+                type="button"
+                className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                aria-label="Open conversations"
+                onClick={() => setMobileConvOpen(true)}
+              >
+                <IconMenu />
+              </button>
+              <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Conversations</span>
+            </div>
+          ) : null}
           {sessionsError && (
             <p className="border-b border-amber-100 bg-amber-50/90 px-3 py-2 text-xs text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-200">
               {sessionsError}
