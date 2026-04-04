@@ -135,6 +135,7 @@ export class AgentIngestService {
       status: DocumentStatus.PROCESSING,
     });
     await this.documents.save(doc);
+    await this.touchAgentUpdatedAt(agent.id);
 
     return { jobId };
   }
@@ -290,6 +291,7 @@ export class AgentIngestService {
     if (row) {
       row.status = DocumentStatus.READY;
       await this.documents.save(row);
+      await this.touchAgentUpdatedAt(agentPk);
     }
   }
 
@@ -305,7 +307,12 @@ export class AgentIngestService {
     if (row) {
       row.status = DocumentStatus.FAILED;
       await this.documents.save(row);
+      await this.touchAgentUpdatedAt(agentPk);
     }
+  }
+
+  private async touchAgentUpdatedAt(agentPk: number): Promise<void> {
+    await this.agents.update({ id: agentPk }, { updatedAt: new Date() });
   }
 
   private dataPlaneBase(): string {
