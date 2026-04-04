@@ -229,29 +229,45 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
   const submitMessage = async () => {
     const text = input.trim();
     if (!text || !selectedSessionId || sending) return;
+    const pendingId = `pending:${crypto.randomUUID()}`;
+    const sentAt = new Date().toISOString();
+    setMessages((prev) => [
+      ...prev,
+      {
+        messageId: pendingId,
+        role: 'USER',
+        content: text,
+        createdAt: sentAt,
+      },
+    ]);
+    setInput('');
     setSending(true);
     setActionError(null);
     try {
       const res = await sendChatMessage(agentId, selectedSessionId, text);
-      setInput('');
       const now = new Date().toISOString();
-      setMessages((prev) => [
-        ...prev,
-        {
-          messageId: res.userMessageId,
-          role: 'USER',
-          content: text,
-          createdAt: now,
-        },
-        {
-          messageId: res.assistantMessageId,
-          role: 'ASSISTANT',
-          content: res.answer,
-          createdAt: now,
-        },
-      ]);
+      setMessages((prev) => {
+        const rest = prev.filter((m) => m.messageId !== pendingId);
+        return [
+          ...rest,
+          {
+            messageId: res.userMessageId,
+            role: 'USER',
+            content: text,
+            createdAt: now,
+          },
+          {
+            messageId: res.assistantMessageId,
+            role: 'ASSISTANT',
+            content: res.answer,
+            createdAt: now,
+          },
+        ];
+      });
       void loadSessions();
     } catch (err) {
+      setMessages((prev) => prev.filter((m) => m.messageId !== pendingId));
+      setInput(text);
       setActionError(getRequestErrorMessage(err));
     } finally {
       setSending(false);
