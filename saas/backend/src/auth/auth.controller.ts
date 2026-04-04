@@ -45,12 +45,9 @@ export class AuthController {
     return this.auth.resetPassword(dto);
   }
 
-  /** Profil minimal (JWT access requis). */
+  /** Profil (JWT access requis). */
   @Get('me')
   me(@Req() req: AuthedRequest) {
-    return {
-      userId: req.user.userId,
-      email: req.user.email,
-    };
+    return this.auth.getMe(req.user.userId);
   }
 }

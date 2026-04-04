@@ -11,6 +11,7 @@ import { getRequestErrorMessage } from '../../lib/errors';
 export function RegisterPage() {
   const navigate = useNavigate();
   const { register, user } = useAuth();
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -32,7 +33,7 @@ export function RegisterPage() {
       return;
     }
     try {
-      await register(email, password);
+      await register(username.trim(), email, password);
       navigate('/admin');
     } catch (err) {
       setError(getRequestErrorMessage(err));
@@ -45,6 +46,16 @@ export function RegisterPage() {
         <AnimatedNotice show={Boolean(error)} variant="error" contentKey={error}>
           {error}
         </AnimatedNotice>
+        <Input
+          label="Username"
+          name="username"
+          autoComplete="username"
+          required
+          minLength={3}
+          maxLength={32}
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+        />
         <Input
           label="Email"
           name="email"

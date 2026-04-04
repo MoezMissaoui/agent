@@ -6,7 +6,7 @@ export type AuthContextValue = {
   user: AuthUser | null;
   loading: boolean;
   login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
-  register: (email: string, password: string) => Promise<TokenResponse>;
+  register: (username: string, email: string, password: string) => Promise<TokenResponse>;
   logout: () => void;
   refreshUser: () => Promise<void>;
 };

@@ -17,7 +17,7 @@ export function AdminHomePage() {
         <p className="text-xs font-medium uppercase tracking-wide text-primary">Overview</p>
         <h1 className="mt-1 text-2xl font-semibold text-slate-900 dark:text-white">Dashboard</h1>
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-          Signed in as <span className="font-medium text-slate-800 dark:text-slate-200">{user?.email}</span>
+          Signed in as <span className="font-medium text-slate-800 dark:text-slate-200">{user?.username}</span>
         </p>
       </div>
 

@@ -9,8 +9,16 @@ export type TokenResponse = {
   expiresIn: string;
 };
 
-export async function registerRequest(email: string, password: string): Promise<TokenResponse> {
-  const { data } = await api.post<TokenResponse>(`${base}/register`, { email, password });
+export async function registerRequest(
+  username: string,
+  email: string,
+  password: string,
+): Promise<TokenResponse> {
+  const { data } = await api.post<TokenResponse>(`${base}/register`, {
+    username,
+    email,
+    password,
+  });
   setTokens(data.accessToken, data.refreshToken);
   return data;
 }
@@ -53,8 +61,8 @@ export async function resetPasswordRequest(token: string, password: string): Pro
   return data;
 }
 
-export async function meRequest(): Promise<{ userId: string; email: string }> {
-  const { data } = await api.get<{ userId: string; email: string }>(`${base}/me`);
+export async function meRequest(): Promise<{ userId: string; email: string; username: string }> {
+  const { data } = await api.get<{ userId: string; email: string; username: string }>(`${base}/me`);
   return data;
 }
 

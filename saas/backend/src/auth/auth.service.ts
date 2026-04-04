@@ -32,19 +32,36 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto) {
-    const existing = await this.users.findOne({
-      where: { email: dto.email.toLowerCase() },
-    });
-    if (existing) {
+    const email = dto.email.toLowerCase();
+    const username = dto.username.trim().toLowerCase();
+    const existingEmail = await this.users.findOne({ where: { email } });
+    if (existingEmail) {
       throw new ConflictException('Email already registered');
+    }
+    const existingUsername = await this.users.findOne({ where: { username } });
+    if (existingUsername) {
+      throw new ConflictException('Username already taken');
     }
     const hash = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
     const user = this.users.create({
-      email: dto.email.toLowerCase(),
+      email,
+      username,
       password: hash,
     });
     await this.users.save(user);
     return this.issueTokenPair(user.identifier, user.email, false);
+  }
+
+  async getMe(identifier: string) {
+    const user = await this.users.findOne({ where: { identifier } });
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+    return {
+      userId: user.identifier,
+      email: user.email,
+      username: user.username,
+    };
   }
 
   async login(dto: LoginDto) {
