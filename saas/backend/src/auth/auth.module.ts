@@ -5,6 +5,7 @@ import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { User } from '../database/entities/user.entity';
+import { UserAuthToken } from '../database/entities/user-auth-token.entity';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { GoogleOAuthController } from './google-oauth.controller';
@@ -25,7 +26,7 @@ export class AuthModule {
     return {
       module: AuthModule,
       imports: [
-        TypeOrmModule.forFeature([User]),
+        TypeOrmModule.forFeature([User, UserAuthToken]),
         PassportModule.register({ defaultStrategy: 'jwt' }),
         JwtModule.registerAsync({
           imports: [ConfigModule],

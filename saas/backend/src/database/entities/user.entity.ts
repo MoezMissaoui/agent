@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { Agent } from './agent.entity';
 import { ApiKey } from './api-key.entity';
+import { UserAuthToken } from './user-auth-token.entity';
 
 @Entity('users')
 export class User {
@@ -34,17 +35,9 @@ export class User {
   @Column({ name: 'google_id', type: 'varchar', length: 255, nullable: true, unique: true })
   googleId: string | null;
 
-  /** SHA-256 hex du token brut (mot de passe oublié) */
-  @Column({
-    name: 'password_reset_token_hash',
-    type: 'varchar',
-    length: 64,
-    nullable: true,
-  })
-  passwordResetTokenHash: string | null;
-
-  @Column({ name: 'password_reset_expires', type: 'datetime', nullable: true })
-  passwordResetExpires: Date | null;
+  /** Date de confirmation d’e-mail (inscription classique) ; null = non vérifié. OAuth Google : renseigné à la création. */
+  @Column({ name: 'email_verified_at', type: 'datetime', nullable: true })
+  emailVerifiedAt: Date | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
@@ -57,6 +50,9 @@ export class User {
 
   @OneToMany(() => Agent, (a) => a.user)
   agents: Agent[];
+
+  @OneToMany(() => UserAuthToken, (t) => t.user)
+  authTokens: UserAuthToken[];
 
   @BeforeInsert()
   ensureIdentifier() {

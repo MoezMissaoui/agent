@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -12,6 +13,8 @@ import * as bcrypt from 'bcrypt';
 import { createHash, randomBytes } from 'crypto';
 import type { Profile } from 'passport-google-oauth20';
 import { Repository } from 'typeorm';
+import { AuthTokenType } from '../database/enums/auth-token-type.enum';
+import { UserAuthToken } from '../database/entities/user-auth-token.entity';
 import { User } from '../database/entities/user.entity';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
@@ -19,6 +22,7 @@ import { RefreshDto } from './dto/refresh.dto';
 import { RegisterDto } from './dto/register.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { MailService, shouldUseSmtpMail } from './mail/mail.service';
+import { ResendVerificationDto } from './dto/resend-verification.dto';
 
 const BCRYPT_ROUNDS = 10;
 
@@ -27,6 +31,8 @@ export class AuthService {
   constructor(
     @InjectRepository(User)
     private readonly users: Repository<User>,
+    @InjectRepository(UserAuthToken)
+    private readonly authTokens: Repository<UserAuthToken>,
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
     private readonly mail: MailService,
@@ -50,7 +56,12 @@ export class AuthService {
       password: hash,
     });
     await this.users.save(user);
-    return this.issueTokenPair(user.identifier, user.email, false);
+    await this.issueEmailVerification(user);
+    return {
+      message: 'Check your email to verify your account before signing in.',
+      email: user.email,
+      requiresEmailVerification: true as const,
+    };
   }
 
   async getMe(identifier: string) {
@@ -62,6 +73,7 @@ export class AuthService {
       userId: user.identifier,
       email: user.email,
       username: user.username,
+      emailVerified: Boolean(user.emailVerifiedAt),
     };
   }
 
@@ -78,6 +90,13 @@ export class AuthService {
     }
     if (!(await bcrypt.compare(dto.password, user.password))) {
       throw new UnauthorizedException('Invalid credentials');
+    }
+    if (!user.emailVerifiedAt) {
+      throw new ForbiddenException({
+        error: 'EMAIL_NOT_VERIFIED',
+        message: 'Please verify your email before signing in.',
+        statusCode: 403,
+      });
     }
     const remember = Boolean(dto.rememberMe);
     return this.issueTokenPair(user.identifier, user.email, remember);
@@ -99,6 +118,13 @@ export class AuthService {
       if (!user) {
         throw new UnauthorizedException('User not found');
       }
+      if (user.password && !user.emailVerifiedAt) {
+        throw new ForbiddenException({
+          error: 'EMAIL_NOT_VERIFIED',
+          message: 'Please verify your email before signing in.',
+          statusCode: 403,
+        });
+      }
       const remember = Boolean(payload.remember);
       return this.issueTokenPair(user.identifier, user.email, remember);
     } catch {
@@ -116,16 +142,15 @@ export class AuthService {
     const generic = {
       message: 'A reset link has been sent to your email.',
     };
-    const rawToken = randomBytes(32).toString('hex');
-    const tokenHash = createHash('sha256').update(rawToken).digest('hex');
     const ttl = parseInt(
       this.config.get<string>('PASSWORD_RESET_TTL_MINUTES', '60'),
       10,
     );
-    const expires = new Date(Date.now() + ttl * 60 * 1000);
-    user.passwordResetTokenHash = tokenHash;
-    user.passwordResetExpires = expires;
-    await this.users.save(user);
+    const rawToken = await this.createAuthToken(
+      user.id,
+      AuthTokenType.PASSWORD_RESET,
+      ttl,
+    );
     const base = this.config
       .get<string>('FRONTEND_URL', 'http://localhost:8548')
       .replace(/\/$/, '');
@@ -142,20 +167,20 @@ export class AuthService {
 
   async resetPassword(dto: ResetPasswordDto) {
     const tokenHash = createHash('sha256').update(dto.token).digest('hex');
-    const user = await this.users.findOne({
-      where: { passwordResetTokenHash: tokenHash },
+    const row = await this.authTokens.findOne({
+      where: {
+        tokenHash,
+        type: AuthTokenType.PASSWORD_RESET,
+      },
+      relations: ['user'],
     });
-    if (
-      !user ||
-      !user.passwordResetExpires ||
-      user.passwordResetExpires < new Date()
-    ) {
+    if (!row || row.expiresAt < new Date()) {
       throw new BadRequestException('Invalid or expired reset token');
     }
+    const user = row.user;
     user.password = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
-    user.passwordResetTokenHash = null;
-    user.passwordResetExpires = null;
     await this.users.save(user);
+    await this.authTokens.delete({ id: row.id });
     return { message: 'Password has been reset. You can sign in.' };
   }
 
@@ -180,6 +205,9 @@ export class AuthService {
         throw new ConflictException('This email is linked to another Google account');
       }
       user.googleId = googleId;
+      if (!user.emailVerifiedAt) {
+        user.emailVerifiedAt = new Date();
+      }
       await this.users.save(user);
       return { identifier: user.identifier, email: user.email };
     }
@@ -189,6 +217,7 @@ export class AuthService {
       username,
       password: null,
       googleId,
+      emailVerifiedAt: new Date(),
     });
     await this.users.save(created);
     return { identifier: created.identifier, email: created.email };
@@ -213,6 +242,87 @@ export class AuthService {
       candidate = `${base.slice(0, 32 - suffix.length)}${suffix}`.slice(0, 32);
     }
     throw new ConflictException('Could not allocate username');
+  }
+
+  async verifyEmailFromToken(rawToken: string): Promise<void> {
+    const trimmed = rawToken?.trim();
+    if (!trimmed) {
+      throw new BadRequestException('Missing verification token');
+    }
+    const tokenHash = createHash('sha256').update(trimmed).digest('hex');
+    const row = await this.authTokens.findOne({
+      where: {
+        tokenHash,
+        type: AuthTokenType.EMAIL_VERIFICATION,
+      },
+      relations: ['user'],
+    });
+    if (!row || row.expiresAt < new Date()) {
+      throw new BadRequestException('Invalid or expired verification link');
+    }
+    const user = row.user;
+    user.emailVerifiedAt = new Date();
+    await this.users.save(user);
+    await this.authTokens.delete({ id: row.id });
+  }
+
+  async resendVerification(dto: ResendVerificationDto) {
+    const email = dto.email.toLowerCase();
+    const user = await this.users.findOne({ where: { email } });
+    const generic = {
+      message:
+        'If an account exists and needs verification, a new link has been sent.',
+    };
+    const smtpConfigured = shouldUseSmtpMail(this.config);
+    if (!user?.password || user.emailVerifiedAt) {
+      return {
+        ...generic,
+        mailDelivery: smtpConfigured ? ('email' as const) : ('dev_log' as const),
+      };
+    }
+    await this.issueEmailVerification(user);
+    return {
+      ...generic,
+      mailDelivery: smtpConfigured ? ('email' as const) : ('dev_log' as const),
+    };
+  }
+
+  private async issueEmailVerification(user: User): Promise<void> {
+    const ttl = parseInt(
+      this.config.get<string>('EMAIL_VERIFICATION_TTL_MINUTES', '1440'),
+      10,
+    );
+    const rawToken = await this.createAuthToken(
+      user.id,
+      AuthTokenType.EMAIL_VERIFICATION,
+      ttl,
+    );
+    const base = this.config
+      .get<string>('BACKEND_PUBLIC_URL', 'http://localhost:8547')
+      .replace(/\/$/, '');
+    const verifyUrl = `${base}/api/v1.0/auth/verify-email?token=${rawToken}`;
+    await this.mail.sendEmailVerificationLink(user.email, verifyUrl);
+  }
+
+  /** Remplace tout jeton existant du même type pour cet utilisateur ; retourne le token brut (secret). */
+  private async createAuthToken(
+    userId: number,
+    type: AuthTokenType,
+    ttlMinutes: number,
+  ): Promise<string> {
+    await this.authTokens.delete({ userId, type });
+    const rawToken = randomBytes(32).toString('hex');
+    const tokenHash = createHash('sha256').update(rawToken).digest('hex');
+    const expiresAt = new Date(Date.now() + ttlMinutes * 60 * 1000);
+    await this.authTokens.save(
+      this.authTokens.create({
+        userId,
+        tokenHash,
+        expiresAt,
+        type,
+      }),
+    );
+    return rawToken;
   }
 
   private issueTokenPair(userId: string, email: string, remember: boolean) {

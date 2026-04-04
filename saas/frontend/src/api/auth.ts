@@ -9,17 +9,27 @@ export type TokenResponse = {
   expiresIn: string;
 };
 
+export type RegisterResponse =
+  | TokenResponse
+  | {
+      message: string;
+      email: string;
+      requiresEmailVerification: true;
+    };
+
 export async function registerRequest(
   username: string,
   email: string,
   password: string,
-): Promise<TokenResponse> {
-  const { data } = await api.post<TokenResponse>(`${base}/register`, {
+): Promise<RegisterResponse> {
+  const { data } = await api.post<RegisterResponse>(`${base}/register`, {
     username,
     email,
     password,
   });
-  setTokens(data.accessToken, data.refreshToken);
+  if ('accessToken' in data && data.accessToken) {
+    setTokens(data.accessToken, data.refreshToken);
+  }
   return data;
 }
 
@@ -61,8 +71,23 @@ export async function resetPasswordRequest(token: string, password: string): Pro
   return data;
 }
 
-export async function meRequest(): Promise<{ userId: string; email: string; username: string }> {
-  const { data } = await api.get<{ userId: string; email: string; username: string }>(`${base}/me`);
+export async function resendVerificationRequest(email: string): Promise<ForgotPasswordResponse> {
+  const { data } = await api.post<ForgotPasswordResponse>(`${base}/resend-verification`, { email });
+  return data;
+}
+
+export async function meRequest(): Promise<{
+  userId: string;
+  email: string;
+  username: string;
+  emailVerified: boolean;
+}> {
+  const { data } = await api.get<{
+    userId: string;
+    email: string;
+    username: string;
+    emailVerified: boolean;
+  }>(`${base}/me`);
   return data;
 }
 

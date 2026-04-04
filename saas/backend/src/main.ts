@@ -45,7 +45,10 @@ async function bootstrap() {
         next();
         return;
       }
-      if (req.path.startsWith('/auth/google')) {
+      if (
+        req.path.startsWith('/auth/google') ||
+        req.path.startsWith('/auth/verify-email')
+      ) {
         next();
         return;
       }

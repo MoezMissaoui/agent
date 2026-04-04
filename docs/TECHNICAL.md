@@ -31,9 +31,18 @@ MySQL : port **3306** par défaut quand le service est lancé via le compose rac
 
 - **Stack :** NestJS, TypeORM, MySQL (`mysql2`), configuration via `@nestjs/config`.
 - **Module** `DatabaseModule` : `TypeOrmModule.forRootAsync`, `synchronize: true` uniquement si `NODE_ENV !== 'production'`.
-- **Entités** (tables) : `User`, `ApiKey`, `Agent`, `Document`, `ChatSession`, `Message` — voir `src/database/entities/`.
+- **Entités** (tables) : `User`, **`user_auth_tokens`** (jetons hashés : réinitialisation mot de passe, vérification e-mail), `ApiKey`, `Agent`, `Document`, `ChatSession`, `Message` — voir `src/database/entities/`.
 - **Clés primaires et identifiants publics :** chaque entité a un **`id`** numérique auto-incrémenté et un champ **`identifier`** (`varchar(36)`, UUID unique, généré au `BeforeInsert`) pour l’exposition API / références stables. **`User.identifier`** est le **`sub`** JWT ; **`User.username`** est requis à l’inscription (unique, normalisé en minuscules).
 - **Enums** : `DocumentStatus` (`PENDING`, `PROCESSING`, `READY`, `FAILED`), `MessageRole` (`USER`, `ASSISTANT`).
+
+### Vérification d’e-mail (inscription e-mail / mot de passe)
+
+- Après **`POST /auth/register`**, aucun JWT n’est retourné : un e-mail contient un lien vers **`GET /api/v1.0/auth/verify-email?token=...`** (sans **`X-API-Key`** dans le navigateur). **`BACKEND_PUBLIC_URL`** dans `.env` doit être l’URL joignable depuis l’e-mail (souvent `http://localhost:8547` en local).
+- **`POST /auth/resend-verification`** `{ "email" }` : renvoie un lien (compte existant, non vérifié).
+- Tant que **`email_verified_at`** est null, **`POST /auth/login`** et **`POST /auth/refresh`** échouent avec **`403`** et code **`EMAIL_NOT_VERIFIED`** pour les comptes avec mot de passe.
+- Comptes **Google OAuth** : **`email_verified_at`** est renseigné à la création / liaison.
+- **Bases déjà peuplées avant cette fonctionnalité** : exécuter un script SQL pour marquer les comptes existants comme vérifiés si besoin, par ex.  
+  `UPDATE users SET email_verified_at = COALESCE(email_verified_at, created_at) WHERE password IS NOT NULL;`
 
 ### Google OAuth (optionnel)
 

@@ -1,40 +1,102 @@
 import { type FormEvent, useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { resendVerificationRequest } from '../../api/auth';
 import { useAuth } from '../../hooks/useAuth';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { PasswordInput } from '../../components/ui/PasswordInput';
 import { AnimatedNotice } from '../../components/ui/AnimatedNotice';
 import { AuthLayout } from '../../layouts/AuthLayout';
-import { getRequestErrorMessage } from '../../lib/errors';
+import { getRequestErrorCode, getRequestErrorMessage } from '../../lib/errors';
 import { googleOAuthStartUrl, isGoogleAuthEnabled } from '../../lib/google-auth';
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { login, user } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
+  const [info, setInfo] = useState<string | null>(null);
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendMessage, setResendMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) navigate('/admin', { replace: true });
   }, [user, navigate]);
 
+  useEffect(() => {
+    const verified = searchParams.get('verified');
+    const err = searchParams.get('error');
+    const pending = searchParams.get('pendingVerification');
+    const em = searchParams.get('email');
+    if (verified === '1') {
+      setInfo('Your email has been verified. You can sign in.');
+    }
+    if (err === 'verify_failed') {
+      setError('This verification link is invalid or has expired. Request a new one below.');
+      setNeedsVerification(true);
+    }
+    if (pending === '1') {
+      setInfo('We sent you a link. Please verify your email before signing in.');
+      if (em) setEmail(em);
+    }
+    if (verified || err || pending || em) {
+      const next = new URLSearchParams(searchParams);
+      ['verified', 'error', 'pendingVerification', 'email'].forEach((k) =>
+        next.delete(k),
+      );
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError('');
+    setInfo(null);
+    setResendMessage(null);
+    setNeedsVerification(false);
     try {
       await login(email, password, rememberMe);
       navigate('/admin');
     } catch (err) {
       setError(getRequestErrorMessage(err));
+      if (getRequestErrorCode(err) === 'EMAIL_NOT_VERIFIED') {
+        setNeedsVerification(true);
+      }
+    }
+  }
+
+  async function onResendVerification() {
+    if (!email.trim()) {
+      setResendMessage('Enter your email above first.');
+      return;
+    }
+    setResendLoading(true);
+    setResendMessage(null);
+    try {
+      const r = await resendVerificationRequest(email.trim());
+      setResendMessage(r.message);
+    } catch {
+      setResendMessage('Could not send. Try again later.');
+    } finally {
+      setResendLoading(false);
     }
   }
 
   return (
-    <AuthLayout title="Sign in" subtitle="Welcome back to Synapse Control Plane">
+    <AuthLayout title="Sign in" subtitle="Welcome back">
       <>
+      {info ? (
+        <div
+          className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-100"
+          role="status"
+        >
+          {info}
+        </div>
+      ) : null}
       <form onSubmit={onSubmit} className="flex flex-col gap-5">
         <AnimatedNotice show={Boolean(error)} variant="error" contentKey={error}>
           {error}
@@ -68,6 +130,26 @@ export function LoginPage() {
         <Button type="submit" className="w-full">
           Sign in
         </Button>
+        {needsVerification ? (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
+            <p className="mb-2 font-medium">Email not verified</p>
+            <p className="mb-3 text-amber-900/90 dark:text-amber-100/90">
+              Use the link we sent you, or request a new verification email.
+            </p>
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full"
+              disabled={resendLoading}
+              onClick={onResendVerification}
+            >
+              {resendLoading ? 'Sending…' : 'Resend verification email'}
+            </Button>
+            {resendMessage ? (
+              <p className="mt-2 text-xs text-amber-800 dark:text-amber-200">{resendMessage}</p>
+            ) : null}
+          </div>
+        ) : null}
         <div className="flex flex-col gap-2 text-center text-sm text-slate-600 dark:text-slate-400">
           <Link to="/forgot-password" className="text-primary hover:underline">
             Forgot password?

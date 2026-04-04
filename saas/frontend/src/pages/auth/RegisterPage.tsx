@@ -33,7 +33,16 @@ export function RegisterPage() {
       return;
     }
     try {
-      await register(username.trim(), email, password);
+      const result = await register(username.trim(), email, password);
+      if (
+        'requiresEmailVerification' in result &&
+        result.requiresEmailVerification
+      ) {
+        navigate(
+          `/login?pendingVerification=1&email=${encodeURIComponent(email)}`,
+        );
+        return;
+      }
       navigate('/admin');
     } catch (err) {
       setError(getRequestErrorMessage(err));
@@ -41,7 +50,7 @@ export function RegisterPage() {
   }
 
   return (
-    <AuthLayout title="Create account" subtitle="Start with the Control Plane">
+    <AuthLayout title="Create account" subtitle="Create your account to get started">
       <form onSubmit={onSubmit} className="flex flex-col gap-5">
         <AnimatedNotice show={Boolean(error)} variant="error" contentKey={error}>
           {error}

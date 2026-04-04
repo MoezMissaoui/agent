@@ -2,10 +2,12 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createTransport, type Transporter } from 'nodemailer';
 import { buildPasswordResetEmail } from './password-reset-email';
+import { buildVerifyEmailContent } from './verify-email.template';
 
 /** Contrat d'envoi d'emails (SMTP ou log en dev). */
 export abstract class MailService {
   abstract sendPasswordResetLink(to: string, resetUrl: string): Promise<void>;
+  abstract sendEmailVerificationLink(to: string, verifyUrl: string): Promise<void>;
 }
 
 /** Dev : log le lien dans la console (aucun SMTP requis). */
@@ -30,6 +32,23 @@ export class DevMailService extends MailService {
     });
     this.logger.log(
       `[DEV] Password reset for ${to} — ${resetUrl}\n---\n${text}\n---`,
+    );
+    return Promise.resolve();
+  }
+
+  sendEmailVerificationLink(to: string, verifyUrl: string): Promise<void> {
+    const appName = this.config.get<string>('MAIL_APP_NAME', 'Control Plane');
+    const ttl = parseInt(
+      this.config.get<string>('EMAIL_VERIFICATION_TTL_MINUTES', '1440'),
+      10,
+    );
+    const { text } = buildVerifyEmailContent({
+      verifyUrl,
+      appName,
+      ttlMinutes: ttl,
+    });
+    this.logger.log(
+      `[DEV] Email verification for ${to} — ${verifyUrl}\n---\n${text}\n---`,
     );
     return Promise.resolve();
   }
@@ -91,6 +110,38 @@ export class SmtpMailService extends MailService {
       });
     } catch (err) {
       this.logger.error('SMTP send failed', err);
+      throw err;
+    }
+  }
+
+  async sendEmailVerificationLink(to: string, verifyUrl: string): Promise<void> {
+    const from =
+      this.config.get<string>('MAIL_FROM_ADDRESS') ||
+      this.config.get<string>('MAIL_USERNAME', '');
+    const appName = this.config.get<string>('MAIL_APP_NAME', 'Control Plane');
+    const ttl = parseInt(
+      this.config.get<string>('EMAIL_VERIFICATION_TTL_MINUTES', '1440'),
+      10,
+    );
+    const { html, text } = buildVerifyEmailContent({
+      verifyUrl,
+      appName,
+      ttlMinutes: ttl,
+    });
+    const subject = this.config.get<string>(
+      'MAIL_EMAIL_VERIFICATION_SUBJECT',
+      `Confirm your email — ${appName}`,
+    );
+    try {
+      await this.transporter.sendMail({
+        from,
+        to,
+        subject,
+        text,
+        html,
+      });
+    } catch (err) {
+      this.logger.error('SMTP send verification email failed', err);
       throw err;
     }
   }

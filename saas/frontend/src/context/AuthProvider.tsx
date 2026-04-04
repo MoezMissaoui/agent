@@ -4,7 +4,6 @@ import {
   logoutClient,
   meRequest,
   registerRequest,
-  type TokenResponse,
 } from '../api/auth';
 import { getStoredAccessToken } from '../lib/api';
 import { AuthContext } from './auth-context';
@@ -51,14 +50,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [refreshUser],
   );
 
-  const register = useCallback(
-    async (username: string, email: string, password: string): Promise<TokenResponse> => {
-      const tokens = await registerRequest(username, email, password);
+  const register = useCallback(async (username: string, email: string, password: string) => {
+    const result = await registerRequest(username, email, password);
+    if ('accessToken' in result && result.accessToken) {
       await refreshUser();
-      return tokens;
-    },
-    [refreshUser],
-  );
+    }
+    return result;
+  }, [refreshUser]);
 
   const logout = useCallback(() => {
     logoutClient();
