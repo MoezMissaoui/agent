@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { createPortal } from 'react-dom';
 import {
   createAgent,
   deleteAgent,
@@ -285,10 +286,11 @@ export function AdminAgentsPage() {
         )}
       </div>
 
-      <AnimatePresence>
-        {modal && (
+      {createPortal(
+        <AnimatePresence>
+          {modal && (
           <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 z-[100] flex justify-end"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -296,85 +298,107 @@ export function AdminAgentsPage() {
           >
             <button
               type="button"
-              className="absolute inset-0 bg-slate-900/45 backdrop-blur-sm"
+              className="absolute inset-0 bg-slate-900/50 backdrop-blur-[1px]"
               aria-label="Close dialog"
               onClick={closeModal}
             />
             <motion.div
               role="dialog"
               aria-modal="true"
-              initial={{ opacity: 0, scale: 0.96, y: 8 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.96, y: 8 }}
-              transition={{ type: 'spring', damping: 26, stiffness: 320 }}
-              className="relative z-10 w-full max-w-lg rounded-2xl border border-slate-200/90 bg-white p-6 shadow-2xl dark:border-slate-700/80 dark:bg-slate-900"
+              aria-labelledby="agent-form-dialog-title"
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'tween', duration: 0.32, ease: [0.32, 0.72, 0, 1] }}
+              className="relative z-10 flex h-full w-full max-w-[100vw] flex-col overflow-hidden border-l border-slate-200/90 bg-white shadow-[-8px_0_32px_-8px_rgba(0,0,0,0.2)] dark:border-slate-700/80 dark:bg-slate-900 dark:shadow-[-8px_0_32px_-8px_rgba(0,0,0,0.45)] md:max-w-[50vw]"
+              onClick={(e) => e.stopPropagation()}
             >
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-                {modal === 'create' ? 'New agent' : 'Edit agent'}
-              </h2>
-              <form className="mt-4 space-y-4" onSubmit={onSubmitForm}>
-                <Input
-                  name="name"
-                  label="Name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                  autoComplete="off"
-                />
-                <div className="w-full">
-                  <label
-                    htmlFor="agent-description-modal"
-                    className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300"
-                  >
-                    Description
-                  </label>
-                  <textarea
-                    id="agent-description-modal"
-                    name="description"
-                    rows={5}
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/25 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500"
-                    placeholder="Scope, tone, or mission (optional)"
+              <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-4 py-3 dark:border-slate-800 sm:px-5">
+                <h2
+                  id="agent-form-dialog-title"
+                  className="text-lg font-semibold text-slate-900 dark:text-white"
+                >
+                  {modal === 'create' ? 'New agent' : 'Edit agent'}
+                </h2>
+                <button
+                  type="button"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                  aria-label="Close"
+                  onClick={closeModal}
+                >
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
+                <form className="flex min-h-min flex-col gap-4" onSubmit={onSubmitForm}>
+                  <Input
+                    name="name"
+                    label="Name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                    autoComplete="off"
                   />
-                </div>
-                {modal === 'edit' && (
-                  <div className="rounded-xl border border-slate-200/90 px-3 py-2.5 dark:border-slate-600">
-                    <label className="flex cursor-pointer items-center gap-3">
-                      <input
-                        type="checkbox"
-                        className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
-                        checked={isActive}
-                        onChange={(e) => setIsActive(e.target.checked)}
-                      />
-                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Active</span>
+                  <div className="w-full">
+                    <label
+                      htmlFor="agent-description-modal"
+                      className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300"
+                    >
+                      Description
                     </label>
-                    <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-                      You can turn Active on only after at least one document has finished ingestion (indexed in
-                      the knowledge base).
-                    </p>
+                    <textarea
+                      id="agent-description-modal"
+                      name="description"
+                      rows={5}
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/25 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500"
+                      placeholder="Scope, tone, or mission (optional)"
+                    />
                   </div>
-                )}
-                <FormFeedback variant="error" message={formError} />
-                <FormFeedback variant="success" message={formSuccess} />
-                <div className="flex flex-wrap justify-end gap-2 pt-2">
-                  <Button type="button" variant="ghost" onClick={closeModal} disabled={submitting}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={submitting}>
-                    {submitting ? 'Saving…' : modal === 'create' ? 'Create' : 'Save'}
-                  </Button>
-                </div>
-              </form>
+                  {modal === 'edit' && (
+                    <div className="rounded-xl border border-slate-200/90 px-3 py-2.5 dark:border-slate-600">
+                      <label className="flex cursor-pointer items-center gap-3">
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
+                          checked={isActive}
+                          onChange={(e) => setIsActive(e.target.checked)}
+                        />
+                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Active</span>
+                      </label>
+                      <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                        You can turn Active on only after at least one document has finished ingestion (indexed in
+                        the knowledge base).
+                      </p>
+                    </div>
+                  )}
+                  <FormFeedback variant="error" message={formError} />
+                  <FormFeedback variant="success" message={formSuccess} />
+                  <div className="mt-auto flex flex-wrap justify-end gap-2 border-t border-slate-100 pt-4 dark:border-slate-800">
+                    <Button type="button" variant="ghost" onClick={closeModal} disabled={submitting}>
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={submitting}>
+                      {submitting ? 'Saving…' : modal === 'create' ? 'Create' : 'Save'}
+                    </Button>
+                  </div>
+                </form>
+              </div>
             </motion.div>
           </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>,
+        document.body,
+      )}
 
-      <AnimatePresence>
-        {chatModalAgent && (
+      {createPortal(
+        <AnimatePresence>
+          {chatModalAgent && (
           <motion.div
-            className="fixed inset-0 z-[70] flex justify-end"
+            className="fixed inset-0 z-[100] flex justify-end"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -395,7 +419,7 @@ export function AdminAgentsPage() {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'tween', duration: 0.32, ease: [0.32, 0.72, 0, 1] }}
-              className="relative z-10 flex h-full w-[min(100vw,1200px)] max-w-[100vw] flex-col overflow-hidden border-l border-slate-200/90 bg-white shadow-[-8px_0_40px_-12px_rgba(0,0,0,0.25)] dark:border-slate-700/80 dark:bg-slate-900 dark:shadow-[-8px_0_40px_-12px_rgba(0,0,0,0.5)] sm:max-w-[min(100vw-1rem,1200px)]"
+              className="relative z-10 flex h-full w-full max-w-[100vw] flex-col overflow-hidden border-l border-slate-200/90 bg-white shadow-[-8px_0_32px_-8px_rgba(0,0,0,0.2)] dark:border-slate-700/80 dark:bg-slate-900 dark:shadow-[-8px_0_32px_-8px_rgba(0,0,0,0.45)] md:max-w-[50vw]"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex flex-shrink-0 items-start justify-between gap-3 border-b border-slate-100 px-4 py-3 dark:border-slate-800 sm:px-5">
@@ -425,13 +449,16 @@ export function AdminAgentsPage() {
               </div>
             </motion.div>
           </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>,
+        document.body,
+      )}
 
-      <AnimatePresence>
-        {deleteTarget && (
+      {createPortal(
+        <AnimatePresence>
+          {deleteTarget && (
           <motion.div
-            className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -477,8 +504,10 @@ export function AdminAgentsPage() {
               </div>
             </motion.div>
           </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>,
+        document.body,
+      )}
     </>
   );
 }
