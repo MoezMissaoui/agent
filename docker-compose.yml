@@ -94,11 +94,11 @@ services:
     ports:
       - "${API_PORT:-8546}:8000"
     volumes:
-      - chroma_data:/data/chroma
+      # Même dossier qu’en local (CHROMA_PERSIST_PATH=./chroma_data) : données visibles dans ./agent/chroma_data sur l’hôte
+      - ./agent/chroma_data:/data/chroma
       - logs:/data/logs
 
 volumes:
   # mysql_data : stockage persistant (ne pas supprimer sauf reset voulu — `docker compose down -v` efface les volumes)
   mysql_data:
-  chroma_data:
   logs:

@@ -31,7 +31,7 @@ services:
       - ./agent/app:/app/app
       - ./agent/run.py:/app/run.py
       - ./agent/logs:/data/logs
-      - chroma_data:/data/chroma
+      - ./agent/chroma_data:/data/chroma
     command:
       [
         "sh",

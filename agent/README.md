@@ -43,7 +43,7 @@ docker compose --env-file .env --env-file agent/.env -f docker-compose.yml -f do
 Équivalent : depuis la **racine** du dépôt, `make dev-build` puis `make dev` (voir le `Makefile` racine).
 
 - **Swagger :** `http://127.0.0.1:<API_PORT>/docs` — `API_PORT` dans **`agent/.env`** (port **hôte**, ex. **8546** ; l’app écoute en **8000** dans le conteneur).
-- **Données persistantes** (volumes nommés du compose racine) : Chroma `/data/chroma`, logs `/data/logs`.
+- **Données persistantes** : Chroma est monté sur **`./agent/chroma_data` → `/data/chroma`** (même base qu’en exécution locale avec `CHROMA_PERSIST_PATH=./chroma_data`) ; logs via volume nommé **`logs`** → `/data/logs` (sauf en dev : `./agent/logs` → `/data/logs`).
 - **Image seule :** `docker build -t data-ai-plane .` puis `docker run --env-file .env -e API_PORT=8000 -e CHROMA_PERSIST_PATH=/data/chroma -v chroma:/data/chroma -p 8546:8000 data-ai-plane` (adapter volumes et variables).
 
 Avec **`EMBEDDING_MODEL`** (Sentence Transformers), étendre le `Dockerfile` (`pip install sentence-transformers` + dépendances éventuelles) : l’image de base ne les inclut pas.
