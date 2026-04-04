@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosHeaders } from 'axios';
 
 const baseURL = import.meta.env.VITE_API_URL ?? 'http://localhost:8547';
 const apiKey = import.meta.env.VITE_API_KEY as string | undefined;
@@ -38,6 +38,15 @@ export function clearTokens(): void {
 export function getRefreshToken(): string | null {
   return localStorage.getItem(REFRESH);
 }
+
+api.interceptors.request.use((config) => {
+  if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+    const h = AxiosHeaders.from(config.headers);
+    h.delete('Content-Type');
+    config.headers = h;
+  }
+  return config;
+});
 
 api.interceptors.request.use((config) => {
   const token = getStoredAccessToken();

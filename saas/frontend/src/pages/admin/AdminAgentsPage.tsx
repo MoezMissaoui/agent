@@ -7,6 +7,7 @@ import {
   updateAgent,
   type Agent,
 } from '../../api/agents';
+import { AgentDocumentSlot } from '../../components/agents/AgentDocumentSlot';
 import { Button } from '../../components/ui/Button';
 import { FormFeedback } from '../../components/ui/FormFeedback';
 import { Input } from '../../components/ui/Input';
@@ -242,6 +243,7 @@ export function AdminAgentsPage() {
                     <span className="italic text-slate-400 dark:text-slate-500">No description</span>
                   )}
                 </p>
+                <AgentDocumentSlot agentId={a.agentId} onIngestComplete={() => void load()} />
                 <p className="mt-3 text-xs text-slate-400 dark:text-slate-500">
                   Updated {formatShortDate(a.updatedAt)}
                 </p>
