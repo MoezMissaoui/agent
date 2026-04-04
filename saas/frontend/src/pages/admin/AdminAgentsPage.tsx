@@ -377,8 +377,14 @@ export function AdminAgentsPage() {
                   )}
                   <FormFeedback variant="error" message={formError} />
                   <FormFeedback variant="success" message={formSuccess} />
-                  <div className="mt-auto flex flex-wrap justify-end gap-2 border-t border-slate-100 pt-4 dark:border-slate-800">
-                    <Button type="button" variant="ghost" onClick={closeModal} disabled={submitting}>
+                  <div className="mt-auto flex flex-wrap justify-end gap-2 pt-4">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={closeModal}
+                      disabled={submitting}
+                      className="bg-slate-200 text-slate-800 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600"
+                    >
                       Cancel
                     </Button>
                     <Button type="submit" disabled={submitting}>
