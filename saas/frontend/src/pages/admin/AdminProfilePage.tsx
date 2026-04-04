@@ -1,6 +1,7 @@
 import { useCallback, useState, type FormEvent } from 'react';
 import { changePasswordRequest, setPasswordRequest } from '../../api/auth';
 import { Button } from '../../components/ui/Button';
+import { FormFeedback } from '../../components/ui/FormFeedback';
 import { PasswordInput } from '../../components/ui/PasswordInput';
 import { useAuth } from '../../hooks/useAuth';
 import { getRequestErrorMessage } from '../../lib/errors';
@@ -152,14 +153,6 @@ export function AdminProfilePage() {
           <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
             Enter your current password, then choose a new one.
           </p>
-          {passwordSetupSuccessMessage ? (
-            <p
-              className="mt-3 rounded-xl border border-emerald-500/25 bg-emerald-500/10 px-3 py-2.5 text-sm text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-200"
-              role="status"
-            >
-              {passwordSetupSuccessMessage}
-            </p>
-          ) : null}
           <form className="mt-4 space-y-4" onSubmit={submitChangePassword}>
             <PasswordInput
               name="currentPassword"
@@ -187,16 +180,13 @@ export function AdminProfilePage() {
               minLength={8}
               required
             />
-            {pwdError ? (
-              <p className="text-sm text-red-600 dark:text-red-400" role="alert">
-                {pwdError}
-              </p>
-            ) : null}
-            {pwdSuccess ? (
-              <p className="text-sm text-emerald-700 dark:text-emerald-400" role="status">
-                {pwdSuccess}
-              </p>
-            ) : null}
+            <FormFeedback variant="error" message={pwdError} />
+            <FormFeedback
+              variant="success"
+              message={
+                pwdError ? null : pwdSuccess ?? passwordSetupSuccessMessage
+              }
+            />
             <Button type="submit" disabled={pwdSubmitting}>
               {pwdSubmitting ? 'Updating…' : 'Update password'}
             </Button>
@@ -227,11 +217,7 @@ export function AdminProfilePage() {
               minLength={8}
               required
             />
-            {addPwdError ? (
-              <p className="text-sm text-red-600 dark:text-red-400" role="alert">
-                {addPwdError}
-              </p>
-            ) : null}
+            <FormFeedback variant="error" message={addPwdError} />
             <Button type="submit" disabled={addPwdSubmitting}>
               {addPwdSubmitting ? 'Saving…' : 'Set password'}
             </Button>
