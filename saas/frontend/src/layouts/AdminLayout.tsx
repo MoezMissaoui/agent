@@ -91,7 +91,7 @@ function IconChevronDown(props: { className?: string }) {
   );
 }
 
-/** Bascule replier / déplier la sidebar (desktop). */
+/** Toggle sidebar collapsed state (desktop). */
 function IconSidebarToggle(props: { collapsed: boolean; className?: string }) {
   return (
     <svg
@@ -144,7 +144,7 @@ export function AdminLayout() {
       {mobileOpen ? (
         <button
           type="button"
-          aria-label="Fermer le menu"
+          aria-label="Close menu"
           className="fixed inset-0 z-40 bg-black/40 md:hidden"
           onClick={() => setMobileOpen(false)}
         />
@@ -183,7 +183,7 @@ export function AdminLayout() {
             <button
               type="button"
               className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 md:hidden"
-              aria-label="Fermer"
+              aria-label="Close"
               onClick={() => setMobileOpen(false)}
             >
               <IconX />
@@ -239,7 +239,7 @@ export function AdminLayout() {
             <button
               type="button"
               className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 md:hidden"
-              aria-label="Ouvrir le menu"
+              aria-label="Open menu"
               onClick={() => setMobileOpen(true)}
             >
               <IconMenu />

@@ -16,7 +16,7 @@ import { Button } from '../ui/Button';
 type Props = {
   agentId: string;
   refreshKey: number;
-  /** `modal` : remplit le conteneur parent (ex. modale plein écran). */
+  /** `modal`: fills the parent container (e.g. full-screen modal). */
   layout?: 'card' | 'modal';
 };
 
@@ -67,7 +67,7 @@ function formatSessionLabel(iso: string) {
 
 function TypingIndicator() {
   return (
-    <div className="flex items-center gap-1 px-1 py-2" aria-live="polite" aria-label="L’assistant répond">
+    <div className="flex items-center gap-1 px-1 py-2" aria-live="polite" aria-label="Assistant is responding">
       {[0, 1, 2].map((i) => (
         <motion.span
           key={i}
@@ -207,7 +207,7 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
   };
 
   const onDeleteSession = async (sessionId: string) => {
-    if (!window.confirm('Supprimer cette conversation et tout son historique ?')) {
+    if (!window.confirm('Delete this conversation and its entire history?')) {
       return;
     }
     setActionError(null);
@@ -286,7 +286,7 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
             animate={{ rotate: 360 }}
             transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
           />
-          Chargement du chat…
+          Loading chat…
         </div>
       </div>
     );
@@ -320,9 +320,9 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
               />
             </svg>
           </div>
-          <h3 className="text-base font-semibold text-slate-900 dark:text-white">Chat avec votre base documentaire</h3>
+          <h3 className="text-base font-semibold text-slate-900 dark:text-white">Chat with your knowledge base</h3>
           <p className="mt-2 max-w-sm text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-            Le chat sera disponible dès qu’au moins un document aura terminé l’indexation (statut{' '}
+            Chat becomes available once at least one document has finished indexing (status{' '}
             <span className="font-medium text-emerald-700 dark:text-emerald-400">READY</span>).
           </p>
         </div>
@@ -354,15 +354,15 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
               onClick={() => void onNewSession()}
               disabled={sessionsLoading}
             >
-              + Nouvelle conversation
+              + New conversation
             </Button>
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto p-2">
             {sessionsLoading ? (
-              <p className="px-2 py-4 text-center text-[11px] text-slate-500">Chargement…</p>
+              <p className="px-2 py-4 text-center text-[11px] text-slate-500">Loading…</p>
             ) : sessions.length === 0 ? (
               <p className="px-2 py-4 text-center text-[11px] leading-relaxed text-slate-500">
-                Aucune conversation. Créez-en une pour commencer.
+                No conversations yet. Start one to begin.
               </p>
             ) : (
               <ul className="space-y-1">
@@ -391,7 +391,7 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
                         type="button"
                         className="flex w-9 shrink-0 items-center justify-center rounded-r-lg text-slate-400 transition hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400"
                         disabled={deletingId === s.sessionId}
-                        aria-label="Supprimer la conversation"
+                        aria-label="Delete conversation"
                         onClick={(e) => {
                           e.stopPropagation();
                           void onDeleteSession(s.sessionId);
@@ -429,7 +429,7 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
             </p>
           )}
 
-          {/* Zone messages */}
+          {/* Message area */}
       <div className="relative flex min-h-0 flex-1 flex-col bg-slate-50/80 dark:bg-slate-900/30">
         <div className="min-h-0 flex-1 overflow-y-auto px-2 py-4 sm:px-4">
           {messagesLoading ? (
@@ -439,18 +439,18 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
           ) : emptySession ? (
             <div className="flex h-full min-h-[240px] flex-col items-center justify-center px-4 text-center">
               <p className="text-sm text-slate-600 dark:text-slate-400">
-                Créez une <strong className="font-medium text-slate-800 dark:text-slate-200">nouvelle conversation</strong>{' '}
-                pour commencer.
+                Start a <strong className="font-medium text-slate-800 dark:text-slate-200">new conversation</strong> to
+                begin.
               </p>
             </div>
           ) : showEmptyHero ? (
             <div className="mx-auto flex max-w-lg flex-col items-center py-8 text-center">
               <div className="mb-4 rounded-2xl bg-primary/10 px-4 py-3 dark:bg-primary/15">
                 <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
-                  Comment puis-je vous aider ?
+                  How can I help?
                 </p>
                 <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
-                  Posez une question sur le contenu de vos documents.
+                  Ask a question about your documents.
                 </p>
               </div>
               <p className="mb-3 text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
@@ -458,9 +458,9 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
               </p>
               <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-center">
                 {[
-                  'Résume les points clés du document.',
-                  'Quels sont les thèmes principaux ?',
-                  'Y a-t-il des définitions importantes ?',
+                  'Summarize the key points in the document.',
+                  'What are the main themes?',
+                  'Are there important definitions?',
                 ].map((s) => (
                   <button
                     key={s}
@@ -510,7 +510,7 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
           )}
         </div>
 
-        {/* Compositeur */}
+        {/* Composer */}
         <div className="flex-shrink-0 border-t border-slate-200/90 bg-white p-3 dark:border-slate-800 dark:bg-slate-950/80">
           <form onSubmit={onSend} className="mx-auto max-w-3xl">
             {actionError && (
@@ -525,8 +525,8 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
                 onKeyDown={onKeyDown}
                 placeholder={
                   selectedSessionId
-                    ? 'Posez une question… (Entrée pour envoyer, Maj+Entrée pour la ligne)'
-                    : 'Créez une conversation pour écrire'
+                    ? 'Ask a question… (Enter to send, Shift+Enter for newline)'
+                    : 'Create a conversation to start typing'
                 }
                 disabled={!selectedSessionId || sending}
                 className="max-h-[200px] min-h-[44px] w-full resize-none bg-transparent px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none disabled:opacity-50 dark:text-slate-100 dark:placeholder:text-slate-500"
@@ -535,7 +535,7 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
                 type="submit"
                 disabled={!selectedSessionId || sending || !input.trim()}
                 className="mb-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-white shadow-md transition hover:brightness-110 disabled:pointer-events-none disabled:opacity-40"
-                aria-label="Envoyer"
+                aria-label="Send"
               >
                 {sending ? (
                   <motion.div
@@ -549,7 +549,7 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
               </button>
             </div>
             <p className="mt-2 text-center text-[10px] text-slate-400 dark:text-slate-500">
-              L’historique est sauvegardé par conversation. Les réponses peuvent être imprécises : vérifiez les sources.
+              History is saved per conversation. Answers may be inaccurate—verify against your sources.
             </p>
           </form>
         </div>

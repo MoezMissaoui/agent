@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/** Durée / courbe communes : auth (`animate-page-enter`) + control panel admin. Modifier ici uniquement. */
+/** Shared duration / easing: auth (`animate-page-enter`) + admin control panel. Change here only. */
 :root {
   --motion-duration: 1s;
   --motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
@@ -44,7 +44,7 @@
   }
 }
 
-/* Control panel : pas d’anim sur la route globale ; shell + contenu animés dans AdminLayout */
+/* Control panel: no anim on global route; shell + content animated in AdminLayout */
 
 @keyframes admin-topbar-in {
   from {

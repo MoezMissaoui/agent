@@ -413,7 +413,7 @@ export function AdminAgentsPage() {
             <button
               type="button"
               className="absolute inset-0 bg-slate-900/50 backdrop-blur-[1px]"
-              aria-label="Fermer le chat"
+              aria-label="Close chat"
               onClick={() => setChatModalAgent(null)}
             />
             <motion.div
@@ -433,12 +433,12 @@ export function AdminAgentsPage() {
                   <h2 id="chat-modal-title" className="truncate text-lg font-semibold text-slate-900 dark:text-white">
                     {chatModalAgent.name}
                   </h2>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Discussion avec l’assistant</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Chat with your assistant</p>
                 </div>
                 <button
                   type="button"
                   className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
-                  aria-label="Fermer"
+                  aria-label="Close"
                   onClick={() => setChatModalAgent(null)}
                 >
                   <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>

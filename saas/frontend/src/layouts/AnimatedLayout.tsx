@@ -1,18 +1,18 @@
 import { Outlet, useLocation } from 'react-router-dom';
 
-/** Refresh / première entrée : pas d’animation ; navigation SPA : `location.key` ≠ default. */
+/** Refresh / first load: no animation; SPA navigation: `location.key` !== default. */
 function useSkipFirstRouteEnterAnimation() {
   const { key } = useLocation();
   return !key || key.toLowerCase() === 'default';
 }
 
-/** Même clé pour tout `/admin/*` pour ne pas remonter le shell à chaque sous-page. */
+/** Same key for all `/admin/*` so the shell does not remount on every sub-route. */
 function routeTransitionKey(pathname: string) {
   if (pathname.startsWith('/admin')) return '/admin';
   return pathname;
 }
 
-/** Transition de route — désactivée sous `/admin` (animations dans AdminLayout). */
+/** Route transition — disabled under `/admin` (animations live in AdminLayout). */
 export function AnimatedLayout() {
   const location = useLocation();
   const skipEnter = useSkipFirstRouteEnterAnimation();

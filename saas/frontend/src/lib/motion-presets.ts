@@ -1,4 +1,4 @@
-/** Courbes et durées pour les notices (respect de prefers-reduced-motion côté composants). */
+/** Easing and duration for notices (components should respect prefers-reduced-motion). */
 export const noticeTransition = (reduceMotion: boolean | null) =>
   reduceMotion
     ? { duration: 0 }

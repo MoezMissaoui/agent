@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-/** Extrait un message lisible depuis une erreur Axios / Nest. */
+/** Extract a readable message from an Axios / Nest error. */
 export function getRequestErrorMessage(err: unknown): string {
   if (axios.isAxiosError(err) && err.response?.data) {
     const d = err.response.data as {
@@ -17,7 +17,7 @@ export function getRequestErrorMessage(err: unknown): string {
   return 'Something went wrong';
 }
 
-/** Code métier Nest (ex. EMAIL_NOT_VERIFIED) si présent dans la réponse JSON. */
+/** Nest business error code (e.g. EMAIL_NOT_VERIFIED) when present in JSON. */
 export function getRequestErrorCode(err: unknown): string | undefined {
   if (axios.isAxiosError(err) && err.response?.data) {
     const d = err.response.data as { error?: string };

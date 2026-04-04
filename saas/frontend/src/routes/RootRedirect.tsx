@@ -1,7 +1,7 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
-/** Remplace la future landing « / » : pour l’instant → /admin si connecté, sinon /login. */
+/** Stand-in for future `/` landing: for now → /admin if signed in, else /login. */
 export function RootRedirect() {
   const { user, loading } = useAuth();
 

@@ -13,11 +13,11 @@ type Props = {
   show: boolean;
   variant: 'error' | 'warning';
   children: ReactNode;
-  /** Clé stable pour ré-animer quand le contenu change (ex. nouveau message d’erreur). */
+  /** Stable key to re-run enter animation when content changes (e.g. new error message). */
   contentKey?: string;
 };
 
-/** Message d’erreur / alerte avec apparition et disparition douces. */
+/** Error / warning message with smooth enter and exit. */
 export function AnimatedNotice({ show, variant, children, contentKey }: Props) {
   const reduceMotion = useReducedMotion();
   const t = noticeTransition(reduceMotion);
