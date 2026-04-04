@@ -452,7 +452,7 @@ export function AdminAgentsPage() {
                 </button>
               </div>
               <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-slate-50/30 dark:bg-slate-950/40">
-                <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-1 pb-2 pt-1 sm:px-3 sm:pb-3">
+                <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
                 <AgentChatPanel
                   agentId={chatModalAgent.agentId}
                   refreshKey={chatRefreshKey}
