@@ -7,6 +7,7 @@ import { AgentChatModule } from './agent-chat/agent-chat.module';
 import { AgentIngestModule } from './agent-ingest/agent-ingest.module';
 import { AgentsModule } from './agents/agents.module';
 import { AuthModule } from './auth/auth.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 import { DatabaseModule } from './database/database.module';
 
 @Module({
@@ -20,6 +21,7 @@ import { DatabaseModule } from './database/database.module';
     AgentsModule,
     AgentIngestModule,
     AgentChatModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],

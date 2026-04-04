@@ -4,13 +4,19 @@ import { ThemeToggle } from '../components/ui/ThemeToggle';
 import { useAuth } from '../hooks/useAuth';
 import { appInitial, appName } from '../lib/brand';
 
-const navItems = [
+const navItems: readonly {
+  to: string;
+  end?: boolean;
+  label: string;
+  /** Primary product area — agent creation & management */
+  core?: boolean;
+}[] = [
   { to: '/admin', end: true, label: 'Dashboard' },
-  { to: '/admin/agents', label: 'Agents' },
-  { to: '/admin/users', label: 'Users' },
-  { to: '/admin/api-keys', label: 'API keys' },
+  { to: '/admin/agents', label: 'Agents', core: true },
+  { to: '/admin/users', label: 'Team' },
+  { to: '/admin/api-keys', label: 'API access' },
   { to: '/admin/settings', label: 'Settings' },
-] as const;
+];
 
 function IconMenu(props: { className?: string }) {
   return (
@@ -197,21 +203,28 @@ export function AdminLayout() {
                 <NavLink
                   key={item.to}
                   to={item.to}
-                  end={'end' in item ? item.end : false}
+                  end={Boolean(item.end)}
                   title={sidebarCollapsed ? item.label : undefined}
                   onClick={() => setMobileOpen(false)}
                   className={({ isActive }) =>
                     `flex items-center gap-2 rounded-xl py-2.5 text-sm font-medium transition ${
-                      sidebarCollapsed ? 'md:justify-center md:px-2' : 'px-3'
+                      sidebarCollapsed ? 'md:justify-center md:px-2' : 'justify-between px-3'
                     } ${
                       isActive
                         ? 'bg-primary/10 text-primary dark:bg-primary/20'
                         : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800/80'
-                    }`
+                    } ${item.core ? 'ring-1 ring-primary/20 dark:ring-primary/25' : ''}`
                   }
                 >
-                  <Icon className="size-5 shrink-0 opacity-90" />
-                  <span className={sidebarCollapsed ? 'md:sr-only' : ''}>{item.label}</span>
+                  <span className="flex min-w-0 items-center gap-2">
+                    <Icon className="size-5 shrink-0 opacity-90" />
+                    <span className={sidebarCollapsed ? 'md:sr-only' : ''}>{item.label}</span>
+                  </span>
+                  {item.core && !sidebarCollapsed ? (
+                    <span className="hidden shrink-0 rounded-md bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary md:inline">
+                      Core
+                    </span>
+                  ) : null}
                 </NavLink>
               );
             })}

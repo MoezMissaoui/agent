@@ -4,8 +4,10 @@ import { AdminLayout } from './layouts/AdminLayout';
 import { AnimatedLayout } from './layouts/AnimatedLayout';
 import { AdminAgentsPage } from './pages/admin/AdminAgentsPage';
 import { AdminHomePage } from './pages/admin/AdminHomePage';
-import { AdminPlaceholderPage } from './pages/admin/AdminPlaceholderPage';
+import { AdminApiKeysProductPage } from './pages/admin/AdminApiKeysProductPage';
 import { AdminProfilePage } from './pages/admin/AdminProfilePage';
+import { AdminTeamPage } from './pages/admin/AdminTeamPage';
+import { AdminWorkspaceSettingsPage } from './pages/admin/AdminWorkspaceSettingsPage';
 import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage';
 import { GoogleOAuthCallbackPage } from './pages/auth/GoogleOAuthCallbackPage';
 import { LoginPage } from './pages/auth/LoginPage';
@@ -37,18 +39,9 @@ function App() {
               <Route index element={<AdminHomePage />} />
               <Route path="agents" element={<AdminAgentsPage />} />
               <Route path="profile" element={<AdminProfilePage />} />
-              <Route
-                path="users"
-                element={<AdminPlaceholderPage title="Users" description="Manage accounts, roles, and invitations." />}
-              />
-              <Route
-                path="api-keys"
-                element={<AdminPlaceholderPage title="API keys" description="Create and rotate API keys for integrations." />}
-              />
-              <Route
-                path="settings"
-                element={<AdminPlaceholderPage title="Settings" description="Workspace and security preferences." />}
-              />
+              <Route path="users" element={<AdminTeamPage />} />
+              <Route path="api-keys" element={<AdminApiKeysProductPage />} />
+              <Route path="settings" element={<AdminWorkspaceSettingsPage />} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
