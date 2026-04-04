@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Post, Req } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { Public } from './decorators/public.decorator';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
@@ -47,6 +48,8 @@ export class AuthController {
 
   /** Profil (JWT access requis). */
   @Get('me')
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Profil utilisateur connecté' })
   me(@Req() req: AuthedRequest) {
     return this.auth.getMe(req.user.userId);
   }
