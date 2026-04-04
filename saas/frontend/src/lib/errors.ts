@@ -1,8 +1,18 @@
 import axios from 'axios';
 
+/** Shown instead of raw 5xx bodies, network failures, or other non–end-user-safe messages. */
+const SERVICE_UNAVAILABLE = 'Service temporarily unavailable';
+
 /** Extract a readable message from an Axios / Nest error. */
 export function getRequestErrorMessage(err: unknown): string {
-  if (axios.isAxiosError(err) && err.response?.data) {
+  if (axios.isAxiosError(err)) {
+    const status = err.response?.status;
+    if (status !== undefined && status >= 500 && status < 600) {
+      return SERVICE_UNAVAILABLE;
+    }
+    if (!err.response || err.code === 'ERR_NETWORK' || err.code === 'ECONNABORTED') {
+      return SERVICE_UNAVAILABLE;
+    }
     const d = err.response.data as {
       message?: string | string[];
       error?: string;
@@ -14,7 +24,7 @@ export function getRequestErrorMessage(err: unknown): string {
     if (typeof d.error === 'string' && d.error !== 'Forbidden') return d.error;
   }
   if (err instanceof Error) return err.message;
-  return 'Something went wrong';
+  return SERVICE_UNAVAILABLE;
 }
 
 /** Nest business error code (e.g. EMAIL_NOT_VERIFIED) when present in JSON. */
