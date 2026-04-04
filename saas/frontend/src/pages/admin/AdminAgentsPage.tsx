@@ -425,7 +425,7 @@ export function AdminAgentsPage() {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'tween', duration: 0.32, ease: [0.32, 0.72, 0, 1] }}
-              className="relative z-10 flex h-full w-full max-w-[100vw] flex-col overflow-hidden border-l border-slate-200/90 bg-white shadow-[-8px_0_32px_-8px_rgba(0,0,0,0.2)] dark:border-slate-700/80 dark:bg-slate-900 dark:shadow-[-8px_0_32px_-8px_rgba(0,0,0,0.45)] md:max-w-[50vw]"
+              className="relative z-10 flex h-full w-full max-w-[100vw] flex-col overflow-hidden border-l border-slate-200/90 bg-white shadow-[-8px_0_32px_-8px_rgba(0,0,0,0.2)] dark:border-slate-700/80 dark:bg-slate-900 dark:shadow-[-8px_0_32px_-8px_rgba(0,0,0,0.45)] md:max-w-[min(72vw,1200px)]"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex flex-shrink-0 items-start justify-between gap-3 border-b border-slate-100 px-4 py-3 dark:border-slate-800 sm:px-5">
