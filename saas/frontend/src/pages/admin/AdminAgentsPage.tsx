@@ -428,7 +428,7 @@ export function AdminAgentsPage() {
               className="relative z-10 flex h-full w-full max-w-[100vw] flex-col overflow-hidden border-l border-slate-200/90 bg-white shadow-[-8px_0_32px_-8px_rgba(0,0,0,0.2)] dark:border-slate-700/80 dark:bg-slate-900 dark:shadow-[-8px_0_32px_-8px_rgba(0,0,0,0.45)] md:max-w-[min(72vw,1200px)]"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex flex-shrink-0 items-start justify-between gap-3 border-b border-slate-100 px-4 py-3 dark:border-slate-800 sm:px-5">
+              <div className="flex flex-shrink-0 items-start justify-between gap-3 border-b border-slate-200/80 bg-slate-50/90 px-4 py-3.5 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/80 sm:px-5">
                 <div className="min-w-0">
                   <h2 id="chat-modal-title" className="truncate text-lg font-semibold text-slate-900 dark:text-white">
                     {chatModalAgent.name}
@@ -437,7 +437,7 @@ export function AdminAgentsPage() {
                 </div>
                 <button
                   type="button"
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-200/80 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
                   aria-label="Close"
                   onClick={() => setChatModalAgent(null)}
                 >
@@ -446,12 +446,14 @@ export function AdminAgentsPage() {
                   </svg>
                 </button>
               </div>
-              <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 pb-3 pt-0 sm:px-4">
+              <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-slate-50/30 dark:bg-slate-950/40">
+                <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-1 pb-2 pt-1 sm:px-3 sm:pb-3">
                 <AgentChatPanel
                   agentId={chatModalAgent.agentId}
                   refreshKey={chatRefreshKey}
                   layout="modal"
                 />
+                </div>
               </div>
             </motion.div>
           </motion.div>

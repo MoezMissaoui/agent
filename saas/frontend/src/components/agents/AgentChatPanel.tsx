@@ -23,7 +23,7 @@ type Props = {
 function SendIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M3.478 2.404a.75.75 0 0 0-.731.807l.965 10.908a.75.75 0 0 0 1.206.58l2.07-1.58 2.748 2.748a.75.75 0 0 0 1.28-.53v-3.75l2.69-2.69a.75.75 0 0 0-.53-1.28H8.75l-1.58-2.07a.75.75 0 0 0-.58-1.206L3.48 2.405Z" />
+      <path d="M2.01 21 23 12 2.01 3 2 10l15 2-15 2z" />
     </svg>
   );
 }
@@ -278,7 +278,11 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
   if (statusLoading) {
     return (
       <div
-        className={`${shellGap} flex min-h-[200px] ${isModal ? 'flex-1' : ''} items-center justify-center rounded-2xl border border-slate-200/80 bg-slate-50/50 dark:border-slate-700/80 dark:bg-slate-900/40`}
+        className={`${shellGap} flex min-h-[200px] ${isModal ? 'flex-1' : ''} items-center justify-center ${
+          isModal
+            ? 'rounded-none border-0 bg-transparent dark:bg-transparent'
+            : 'rounded-2xl border border-slate-200/80 bg-slate-50/50 dark:border-slate-700/80 dark:bg-slate-900/40'
+        }`}
       >
         <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
           <motion.div
@@ -295,7 +299,9 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
   if (statusError) {
     return (
       <div
-        className={`${shellGap} rounded-2xl border border-amber-200/90 bg-amber-50/90 px-4 py-3 dark:border-amber-800/60 dark:bg-amber-950/40`}
+        className={`${shellGap} border border-amber-200/90 bg-amber-50/90 px-4 py-3 dark:border-amber-800/60 dark:bg-amber-950/40 ${
+          isModal ? 'rounded-xl' : 'rounded-2xl'
+        }`}
       >
         <p className="text-sm text-amber-900 dark:text-amber-100">{statusError}</p>
       </div>
@@ -305,7 +311,11 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
   if (!chatEnabled) {
     return (
       <div
-        className={`${shellGap} overflow-hidden rounded-2xl border border-slate-200/90 bg-gradient-to-b from-slate-50 to-white dark:border-slate-700/80 dark:from-slate-900/80 dark:to-slate-950/80 ${isModal ? 'flex min-h-0 flex-1 flex-col' : ''}`}
+        className={`${shellGap} overflow-hidden bg-gradient-to-b from-slate-50 to-white dark:from-slate-900/80 dark:to-slate-950/80 ${
+          isModal
+            ? 'flex min-h-0 flex-1 flex-col rounded-none border-0'
+            : 'rounded-2xl border border-slate-200/90 dark:border-slate-700/80'
+        }`}
       >
         <div
           className={`flex flex-col items-center justify-center px-6 py-10 text-center ${isModal ? 'min-h-[280px] flex-1' : 'min-h-[220px]'}`}
@@ -336,7 +346,11 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
 
   return (
     <div
-      className={`${shellGap} flex ${chatSize} flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm dark:border-slate-700/80 dark:bg-slate-950/50`}
+      className={`${shellGap} flex ${chatSize} flex-col overflow-hidden ${
+        isModal
+          ? 'rounded-none border-0 bg-transparent shadow-none dark:bg-transparent'
+          : 'rounded-2xl border border-slate-200/90 bg-white shadow-sm dark:border-slate-700/80 dark:bg-slate-950/50'
+      }`}
     >
       <div className="flex min-h-0 flex-1 flex-row overflow-hidden">
         <aside
@@ -511,12 +525,22 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
         </div>
 
         {/* Composer */}
-        <div className="flex-shrink-0 border-t border-slate-200/90 bg-white p-3 dark:border-slate-800 dark:bg-slate-950/80">
-          <form onSubmit={onSend} className="mx-auto max-w-3xl">
+        <div
+          className={`flex-shrink-0 border-t bg-white p-3 dark:bg-slate-950/90 ${
+            isModal
+              ? 'border-slate-200/90 shadow-[0_-4px_24px_-8px_rgba(0,0,0,0.08)] dark:border-slate-800 dark:shadow-[0_-4px_24px_-8px_rgba(0,0,0,0.35)]'
+              : 'border-slate-200/90 dark:border-slate-800'
+          }`}
+        >
+          <form onSubmit={onSend} className={`mx-auto ${isModal ? 'max-w-4xl' : 'max-w-3xl'}`}>
             {actionError && (
               <p className="mb-2 text-xs text-red-600 dark:text-red-400">{actionError}</p>
             )}
-            <div className="flex items-end gap-2 rounded-2xl border border-slate-200 bg-slate-50/90 p-2 shadow-inner dark:border-slate-600 dark:bg-slate-900/80">
+            <div
+              className={`flex items-end gap-2 rounded-2xl border border-slate-200 bg-slate-50/90 p-2 shadow-inner dark:border-slate-600 dark:bg-slate-900/80 ${
+                isModal ? 'ring-1 ring-slate-200/60 dark:ring-slate-600/50' : ''
+              }`}
+            >
               <textarea
                 ref={textareaRef}
                 rows={1}
@@ -534,7 +558,11 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
               <button
                 type="submit"
                 disabled={!selectedSessionId || sending || !input.trim()}
-                className="mb-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-white shadow-md transition hover:brightness-110 disabled:pointer-events-none disabled:opacity-40"
+                className={`mb-0.5 flex shrink-0 items-center justify-center rounded-xl bg-primary text-white transition hover:brightness-110 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-950 ${
+                  isModal
+                    ? 'h-11 w-11 min-h-[44px] min-w-[44px] shadow-lg shadow-primary/30'
+                    : 'h-10 w-10 shadow-md'
+                }`}
                 aria-label="Send"
               >
                 {sending ? (
@@ -544,7 +572,7 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
                     transition={{ duration: 0.7, repeat: Infinity, ease: 'linear' }}
                   />
                 ) : (
-                  <SendIcon className="h-5 w-5" />
+                  <SendIcon className={isModal ? 'h-6 w-6 translate-x-px' : 'h-5 w-5 translate-x-px'} />
                 )}
               </button>
             </div>
