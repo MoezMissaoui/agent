@@ -169,24 +169,28 @@ export function AdminAgentsPage() {
   };
 
   return (
-    <div className="min-h-full bg-gradient-to-b from-slate-50 via-white to-slate-100/90 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
-      <div className="mx-auto max-w-6xl space-y-8 px-4 py-6 md:px-6 md:py-8">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-primary">Data / AI</p>
-            <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
-              Agents
-            </h1>
-            <p className="mt-1 max-w-xl text-sm text-slate-600 dark:text-slate-400">
-              Create and manage assistants for your workspace. New agents start inactive; you can mark one
-              Active only after at least one document has completed ingestion.
-            </p>
+    <>
+      <div className="border-b border-slate-200/80 bg-gradient-to-b from-slate-50 to-white/70 dark:border-slate-800 dark:from-slate-900 dark:to-slate-900/60">
+        <div className="mx-auto max-w-6xl px-4 pb-6 pt-4 md:px-6 md:pb-8 md:pt-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wide text-primary">Data / AI</p>
+              <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
+                Agents
+              </h1>
+              <p className="mt-1 max-w-xl text-sm text-slate-600 dark:text-slate-400">
+                Create and manage assistants for your workspace. New agents start inactive; you can mark one
+                Active only after at least one document has completed ingestion.
+              </p>
+            </div>
+            <Button type="button" onClick={openCreate} className="shrink-0 shadow-md shadow-primary/20">
+              New agent
+            </Button>
           </div>
-          <Button type="button" onClick={openCreate} className="shrink-0 shadow-md shadow-primary/20">
-            New agent
-          </Button>
         </div>
+      </div>
 
+      <div className="mx-auto max-w-6xl space-y-8 px-4 py-6 md:px-6 md:py-8">
         {listError && (
           <FormFeedback variant="error" message={listError} />
         )}
@@ -475,6 +479,6 @@ export function AdminAgentsPage() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </>
   );
 }
