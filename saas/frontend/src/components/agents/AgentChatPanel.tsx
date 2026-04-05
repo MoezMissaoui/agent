@@ -344,7 +344,7 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card', initialSe
     }
   }, [agentId]);
 
-  const loadSessions = useCallback(async () => {
+  const loadSessions = useCallback(async (): Promise<ChatSessionSummary[] | null> => {
     setSessionsError(null);
     setSessionsLoading(true);
     try {
@@ -361,10 +361,12 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card', initialSe
         }
         return list[0]?.sessionId ?? null;
       });
+      return list;
     } catch (e) {
       setSessionsError(getRequestErrorMessage(e));
       setSessions([]);
       setSelectedSessionId(null);
+      return null;
     } finally {
       setSessionsLoading(false);
     }
@@ -439,7 +441,15 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card', initialSe
       const { sessionId } = await createChatSession(agentId);
       setSelectedSessionId(sessionId);
       setMessages([]);
-      await loadSessions();
+      const list = await loadSessions();
+      if (list) {
+        const idx = list.findIndex((s) => s.sessionId === sessionId);
+        if (idx >= 0) {
+          const autoTitle = `Conversation ${list.length - idx}`;
+          await renameChatSession(agentId, sessionId, autoTitle);
+          await loadSessions();
+        }
+      }
       if (isModal && !isMd) {
         setMobileConvOpen(false);
       }

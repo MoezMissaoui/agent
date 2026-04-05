@@ -2,7 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
-import { getDashboard, type DashboardPayload } from '../../api/dashboard';
+import { getDashboard, type DashboardPayload, type DashboardRecentSession } from '../../api/dashboard';
 import { AgentChatPanel } from '../../components/agents/AgentChatPanel';
 import { useAuth } from '../../hooks/useAuth';
 import { getRequestErrorMessage } from '../../lib/errors';
@@ -20,10 +20,16 @@ function formatRelative(iso: string): string {
   return d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 }
 
+function conversationDisplayTitle(row: DashboardRecentSession): string {
+  const t = row.sessionTitle?.trim();
+  return t ? t : 'Conversation';
+}
+
 type DashboardChatModal = {
   agentId: string;
   agentName: string;
   sessionId: string;
+  conversationTitle: string;
 };
 
 export function AdminHomePage() {
@@ -116,7 +122,7 @@ export function AdminHomePage() {
         <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm dark:border-slate-700/80 dark:bg-slate-900/80 lg:col-span-2">
           <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Recent chat sessions</h2>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Latest 5 sessions by update time. Click a row to open the conversation.
+            Conversation title, assistant name, and last activity. Click a row to open the chat.
           </p>
           {loading && !data ? (
             <p className="mt-4 text-sm text-slate-500">Loading…</p>
@@ -136,13 +142,14 @@ export function AdminHomePage() {
                         agentId: row.agentId,
                         agentName: row.agentName,
                         sessionId: row.sessionId,
+                        conversationTitle: conversationDisplayTitle(row),
                       });
                     }}
                     className="flex w-full items-center justify-between gap-3 rounded-xl border border-slate-100 bg-surface px-3 py-2.5 text-left text-sm text-slate-700 transition hover:border-primary/30 hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700/60 dark:bg-surface-dark dark:text-slate-300 dark:hover:border-primary/40 dark:hover:bg-primary/10"
                   >
                     <span className="min-w-0 flex-1 truncate">
                       <span className="block truncate font-semibold text-slate-800 dark:text-slate-100">
-                        {row.sessionTitle?.trim() ? row.sessionTitle.trim() : 'Conversation'}
+                        {conversationDisplayTitle(row)}
                       </span>
                       <span className="mt-0.5 block truncate text-xs text-slate-500 dark:text-slate-400">{row.agentName}</span>
                     </span>
@@ -226,9 +233,9 @@ export function AdminHomePage() {
                 <div className="flex flex-shrink-0 items-start justify-between gap-3 border-b border-slate-200/80 bg-slate-50/90 px-4 py-3.5 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/80 sm:px-5">
                   <div className="min-w-0">
                     <h2 id="dashboard-chat-modal-title" className="truncate text-lg font-semibold text-slate-900 dark:text-white">
-                      {chatModal.agentName}
+                      {chatModal.conversationTitle}
                     </h2>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">Chat session</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{chatModal.agentName}</p>
                   </div>
                   <button
                     type="button"
