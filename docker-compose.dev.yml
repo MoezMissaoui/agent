@@ -21,9 +21,9 @@ services:
       - frontend_node_modules:/app/node_modules
     environment:
       CHOKIDAR_USEPOLLING: "true"
-    # Réinstaller les deps si le volume node_modules est ancien (ex. nouveau package comme framer-motion)
+    # Réinstaller les deps si le volume node_modules est ancien (ajouter ici tout nouveau package racine requis)
     command: >
-      sh -c "if [ ! -d node_modules/vite ] || [ ! -d node_modules/framer-motion ]; then npm ci; fi && npm run dev -- --host 0.0.0.0 --port 8548"
+      sh -c "if [ ! -d node_modules/vite ] || [ ! -d node_modules/framer-motion ] || [ ! -d node_modules/react-datepicker ]; then npm ci; fi && npm run dev -- --host 0.0.0.0 --port 8548"
 
   agent:
     # Bind-mount logs so YYYY-MM-DD.log appears under ./agent/logs on the host (base compose uses a named volume).

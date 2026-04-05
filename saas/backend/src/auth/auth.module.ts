@@ -4,12 +4,13 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { AgentApiKeysModule } from '../agent-api-keys/agent-api-keys.module';
 import { User } from '../database/entities/user.entity';
 import { UserAuthToken } from '../database/entities/user-auth-token.entity';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { GoogleOAuthController } from './google-oauth.controller';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { JwtOrAgentApiKeyGuard } from './guards/jwt-or-agent-api-key.guard';
 import { MailService, createMailService } from './mail/mail.service';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
@@ -26,6 +27,7 @@ export class AuthModule {
     return {
       module: AuthModule,
       imports: [
+        AgentApiKeysModule,
         TypeOrmModule.forFeature([User, UserAuthToken]),
         PassportModule.register({ defaultStrategy: 'jwt' }),
         JwtModule.registerAsync({
@@ -44,7 +46,7 @@ export class AuthModule {
         AuthService,
         JwtStrategy,
         ...(googleOAuthEnabled ? [GoogleStrategy] : []),
-        { provide: APP_GUARD, useClass: JwtAuthGuard },
+        { provide: APP_GUARD, useClass: JwtOrAgentApiKeyGuard },
         {
           provide: MailService,
           useFactory: (config: ConfigService) => createMailService(config),

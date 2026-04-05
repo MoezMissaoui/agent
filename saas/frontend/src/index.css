@@ -102,3 +102,8 @@
     animation: none !important;
   }
 }
+
+/* react-datepicker: package default CSS in DateTimePickerField; only z-index so the popper stacks above admin slide-overs */
+.react-datepicker-popper {
+  z-index: 200 !important;
+}

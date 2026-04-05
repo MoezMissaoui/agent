@@ -12,8 +12,8 @@ async function bootstrap() {
   const keyEntries = loadApiKeys();
   const allowedTokens = allowedTokensFromEntries(keyEntries);
   if (allowedTokens.size === 0) {
-    throw new Error(
-      'No API keys configured. Set API_KEYS_JSON or API_KEYS_FILE (see .env.example and config/api-keys.example.json).',
+    console.warn(
+      '[bootstrap] No deployment API keys in env (API_KEYS_JSON / API_KEYS_FILE). JWT and per-assistant API tokens still work.',
     );
   }
 
@@ -54,11 +54,26 @@ async function bootstrap() {
       }
       const raw = req.headers['x-api-key'];
       const key = Array.isArray(raw) ? raw[0] : raw;
-      if (!key || !allowedTokens.has(key)) {
-        res.status(403).json({ message: 'Invalid or missing API key' });
+      const auth = req.headers.authorization;
+      const bearer =
+        typeof auth === 'string' && auth.startsWith('Bearer ') ? auth : undefined;
+      if (req.method === 'GET' && (req.path === '/' || req.path === '')) {
+        next();
         return;
       }
-      next();
+      if (key && allowedTokens.has(key)) {
+        next();
+        return;
+      }
+      if (key) {
+        next();
+        return;
+      }
+      if (bearer) {
+        next();
+        return;
+      }
+      res.status(403).json({ message: 'Invalid or missing API key or Authorization' });
     },
   );
 
