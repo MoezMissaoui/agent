@@ -13,16 +13,21 @@ export function AdminWorkspaceSettingsPage() {
         .
       </p>
       <p>
-        <strong className="font-medium text-slate-800 dark:text-slate-200">Agents &amp; data</strong> — each assistant has
-        its own name, description, documents, and chat history. Manage lifecycle and ingestion from{' '}
+        <strong className="font-medium text-slate-800 dark:text-slate-200">AI assistants &amp; data</strong> — each
+        assistant has its own name, description, documents, and chat history. Manage lifecycle and ingestion from{' '}
         <Link to="/admin/agents" className="font-medium text-primary hover:underline">
-          Agents
+          AI assistants
+        </Link>
+        ; expose them on the web or in apps via{' '}
+        <Link to="/admin/api-keys" className="font-medium text-primary hover:underline">
+          API access
         </Link>
         .
       </p>
       <p>
-        Workspace-wide preferences (defaults, notifications) will appear here as the product grows; the live workflow
-        for building agents stays in the Agents area.
+        Workspace-wide preferences (defaults, notifications) will appear here as the product grows; assistant setup and
+        API integration stay in <span className="font-medium text-slate-800 dark:text-slate-200">AI assistants</span> and{' '}
+        <span className="font-medium text-slate-800 dark:text-slate-200">API access</span>.
       </p>
     </AgentProductPageShell>
   );

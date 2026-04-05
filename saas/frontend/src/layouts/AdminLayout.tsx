@@ -8,11 +8,11 @@ const navItems: readonly {
   to: string;
   end?: boolean;
   label: string;
-  /** Primary product area — agent creation & management */
+  /** Primary product area — AI assistant creation & management */
   core?: boolean;
 }[] = [
   { to: '/admin', end: true, label: 'Dashboard' },
-  { to: '/admin/agents', label: 'Agents', core: true },
+  { to: '/admin/agents', label: 'AI assistants', core: true },
   { to: '/admin/api-keys', label: 'API access' },
   { to: '/admin/settings', label: 'Settings' },
 ];

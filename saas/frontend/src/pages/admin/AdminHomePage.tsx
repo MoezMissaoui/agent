@@ -44,11 +44,11 @@ export function AdminHomePage() {
 
   const statCards = data
     ? [
-        { label: 'Your agents', value: String(data.totalAgents), hint: 'In your workspace' },
+        { label: 'AI assistants', value: String(data.totalAgents), hint: 'In your workspace' },
         {
           label: 'Documents ready',
           value: String(data.documentsReady),
-          hint: 'Indexed for RAG (your agents)',
+          hint: 'Indexed for RAG (your assistants)',
         },
         {
           label: 'Chat sessions',
@@ -62,7 +62,7 @@ export function AdminHomePage() {
         },
       ]
     : [
-        { label: 'Your agents', value: '—', hint: '—' },
+        { label: 'AI assistants', value: '—', hint: '—' },
         { label: 'Documents ready', value: '—', hint: '—' },
         { label: 'Chat sessions', value: '—', hint: 'Last 24h' },
         { label: 'Messages', value: '—', hint: 'Last 24h' },
@@ -103,7 +103,7 @@ export function AdminHomePage() {
         <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm dark:border-slate-700/80 dark:bg-slate-900/80 lg:col-span-2">
           <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Recent chat sessions</h2>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Latest activity on your agents (by session update time).
+            Latest activity on your AI assistants (by session update time).
           </p>
           {loading && !data ? (
             <p className="mt-4 text-sm text-slate-500">Loading…</p>
@@ -130,12 +130,12 @@ export function AdminHomePage() {
         <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm dark:border-slate-700/80 dark:bg-slate-900/80">
           <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Quick start</h2>
           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            Build assistants and attach knowledge. Each row below is a link — click to open that section.
+            Build AI assistants, attach knowledge, and integrate via API. Each row opens that section.
           </p>
           <ul className="mt-4 space-y-1">
             {(
               [
-                { to: '/admin/agents', label: 'Agents — create & manage', primary: true },
+                { to: '/admin/agents', label: 'AI assistants — create & manage', primary: true },
                 { to: '/admin/api-keys', label: 'API access', primary: false },
                 { to: '/admin/settings', label: 'Workspace settings', primary: false },
                 { to: '/admin/profile', label: 'Profile', primary: false },

@@ -7,7 +7,7 @@ type Props = {
   children: ReactNode;
 };
 
-/** Shared layout for secondary admin pages — always ties back to the agent-creation workflow. */
+/** Shared layout for secondary admin pages — ties back to AI assistant setup & API use. */
 export function AgentProductPageShell({ eyebrow, title, children }: Props) {
   return (
     <div className="mx-auto max-w-2xl space-y-8">
@@ -19,11 +19,15 @@ export function AgentProductPageShell({ eyebrow, title, children }: Props) {
       <div className="space-y-4 text-sm leading-relaxed text-slate-600 dark:text-slate-400">{children}</div>
 
       <div className="rounded-2xl border border-primary/25 bg-gradient-to-b from-primary/10 to-primary/5 p-5 dark:from-primary/15 dark:to-primary/5">
-        <p className="text-sm font-semibold text-slate-900 dark:text-white">Create &amp; manage agents</p>
+        <p className="text-sm font-semibold text-slate-900 dark:text-white">Create &amp; manage AI assistants</p>
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-          Define assistants, upload knowledge, and chat with the RAG pipeline — everything starts in{' '}
+          Define assistants, upload knowledge, and test chat — then expose the same flows on your website or app via{' '}
+          <Link to="/admin/api-keys" className="font-medium text-primary hover:underline">
+            API access
+          </Link>
+          . Main setup is under{' '}
           <Link to="/admin/agents" className="font-medium text-primary hover:underline">
-            Agents
+            AI assistants
           </Link>
           .
         </p>
@@ -31,7 +35,7 @@ export function AgentProductPageShell({ eyebrow, title, children }: Props) {
           to="/admin/agents"
           className="mt-4 inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:brightness-110"
         >
-          Open Agents
+          Open AI assistants
         </Link>
       </div>
     </div>

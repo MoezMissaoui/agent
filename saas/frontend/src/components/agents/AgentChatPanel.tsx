@@ -593,10 +593,11 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
               />
             </svg>
           </div>
-          <h3 className="text-base font-semibold text-slate-900 dark:text-white">Chat with your knowledge base</h3>
+          <h3 className="text-base font-semibold text-slate-900 dark:text-white">Chat with this AI assistant</h3>
           <p className="mt-2 max-w-sm text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-            Chat becomes available once at least one document has finished indexing (status{' '}
-            <span className="font-medium text-emerald-700 dark:text-emerald-400">READY</span>).
+            Chat opens after at least one knowledge document is indexed (status{' '}
+            <span className="font-medium text-emerald-700 dark:text-emerald-400">READY</span>). The same assistant can be
+            reached from your site or app via the API.
           </p>
         </div>
       </div>

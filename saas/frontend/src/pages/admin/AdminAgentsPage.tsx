@@ -127,7 +127,7 @@ export function AdminAgentsPage() {
           name: name.trim(),
           ...(description.trim() ? { description: description.trim() } : {}),
         });
-        setFormSuccess('Agent created.');
+        setFormSuccess('AI assistant created.');
       } else if (modal === 'edit' && editAgent) {
         const payload: Parameters<typeof updateAgent>[1] = {};
         if (name.trim() !== editAgent.name) payload.name = name.trim();
@@ -141,7 +141,7 @@ export function AdminAgentsPage() {
           return;
         }
         await updateAgent(editAgent.agentId, payload);
-        setFormSuccess('Agent updated.');
+        setFormSuccess('AI assistant updated.');
       }
       await load();
       setTimeout(() => {
@@ -175,17 +175,18 @@ export function AdminAgentsPage() {
         <div className="mx-auto max-w-6xl px-4 pb-6 pt-4 md:px-6 md:pb-8 md:pt-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-primary">Data / AI</p>
+              <p className="text-xs font-medium uppercase tracking-wide text-primary">AI assistants</p>
               <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
-                Agents
+                AI assistants
               </h1>
               <p className="mt-1 max-w-xl text-sm text-slate-600 dark:text-slate-400">
-                Create and manage assistants for your workspace. New agents start inactive; you can mark one
-                Active only after at least one document has completed ingestion.
+                Create and configure assistants backed by your documents. Deploy them on a website or in your product
+                using the Control Plane API (see API access). New assistants start inactive; mark one Active only after
+                at least one document has finished ingestion.
               </p>
             </div>
             <Button type="button" onClick={openCreate} className="shrink-0 shadow-md shadow-primary/20">
-              New agent
+              New assistant
             </Button>
           </div>
         </div>
@@ -211,12 +212,13 @@ export function AdminAgentsPage() {
             animate={{ opacity: 1, y: 0 }}
             className="rounded-2xl border border-dashed border-slate-300/90 bg-white/60 px-6 py-16 text-center dark:border-slate-600 dark:bg-slate-900/40"
           >
-            <p className="text-sm font-medium text-slate-700 dark:text-slate-200">No agents yet</p>
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-200">No AI assistants yet</p>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              Create your first agent to define name, description, and behavior scope.
+              Create your first assistant: name, description, and knowledge documents — then integrate via API for your
+              site or app.
             </p>
             <Button type="button" className="mt-6" onClick={openCreate}>
-              Create agent
+              Create assistant
             </Button>
           </motion.div>
         ) : (
@@ -323,7 +325,7 @@ export function AdminAgentsPage() {
                   id="agent-form-dialog-title"
                   className="text-lg font-semibold text-slate-900 dark:text-white"
                 >
-                  {modal === 'create' ? 'New agent' : 'Edit agent'}
+                  {modal === 'create' ? 'New AI assistant' : 'Edit AI assistant'}
                 </h2>
                 <button
                   type="button"
@@ -360,7 +362,7 @@ export function AdminAgentsPage() {
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                       className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/25 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500"
-                      placeholder="Scope, tone, or mission (optional)"
+                      placeholder="How this assistant should behave on your site or in the API (optional)"
                     />
                   </div>
                   {modal === 'edit' && (
@@ -375,8 +377,8 @@ export function AdminAgentsPage() {
                         <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Active</span>
                       </label>
                       <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-                        You can turn Active on only after at least one document has finished ingestion (indexed in
-                        the knowledge base).
+                        You can turn Active on only after at least one document has finished ingestion (indexed for
+                        this assistant).
                       </p>
                     </div>
                   )}
@@ -393,7 +395,7 @@ export function AdminAgentsPage() {
                       Cancel
                     </Button>
                     <Button type="submit" disabled={submitting}>
-                      {submitting ? 'Saving…' : modal === 'create' ? 'Create' : 'Save'}
+                      {submitting ? 'Saving…' : modal === 'create' ? 'Create assistant' : 'Save'}
                     </Button>
                   </div>
                 </form>
@@ -438,7 +440,7 @@ export function AdminAgentsPage() {
                   <h2 id="chat-modal-title" className="truncate text-lg font-semibold text-slate-900 dark:text-white">
                     {chatModalAgent.name}
                   </h2>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Chat with your assistant</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Test this AI assistant</p>
                 </div>
                 <button
                   type="button"
@@ -490,11 +492,10 @@ export function AdminAgentsPage() {
               exit={{ opacity: 0, scale: 0.96 }}
               className="relative z-10 w-full max-w-md rounded-2xl border border-slate-200/90 bg-white p-6 shadow-2xl dark:border-slate-700/80 dark:bg-slate-900"
             >
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Delete agent?</h3>
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Delete this AI assistant?</h3>
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
                 <span className="font-medium text-slate-800 dark:text-slate-200">{deleteTarget.name}</span>{' '}
-                will be permanently removed. Linked documents and chat sessions for this agent are deleted as
-                well.
+                will be permanently removed. Linked documents and chat sessions for this assistant are deleted as well.
               </p>
               {deleteError && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{deleteError}</p>}
               <div className="mt-6 flex flex-wrap justify-end gap-2">
