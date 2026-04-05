@@ -1,17 +1,20 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   createChatSession,
   deleteChatSession,
   getChatSessionMessages,
   getChatStatus,
   listChatSessions,
+  renameChatSession,
   sendChatMessage,
   type ChatMessage,
   type ChatSessionSummary,
 } from '../../api/agentChat';
 import { getRequestErrorMessage } from '../../lib/errors';
 import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
 
 type Props = {
   agentId: string;
@@ -86,6 +89,188 @@ function useMediaQueryMd() {
   return isMd;
 }
 
+function IconDotsHorizontal({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <circle cx="6" cy="12" r="1.75" />
+      <circle cx="12" cy="12" r="1.75" />
+      <circle cx="18" cy="12" r="1.75" />
+    </svg>
+  );
+}
+
+function IconPencilOutline({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+    </svg>
+  );
+}
+
+function IconTrashOutline({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+    </svg>
+  );
+}
+
+function ConversationSessionRow({
+  session,
+  fallbackTitle,
+  selected,
+  deleting,
+  menuOpen,
+  onToggleMenu,
+  onCloseMenu,
+  onSelect,
+  onRename,
+  onDelete,
+}: {
+  session: ChatSessionSummary;
+  fallbackTitle: string;
+  selected: boolean;
+  deleting: boolean;
+  menuOpen: boolean;
+  onToggleMenu: () => void;
+  onCloseMenu: () => void;
+  onSelect: () => void;
+  onRename: () => void;
+  onDelete: () => void;
+}) {
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const menuTriggerRef = useRef<HTMLButtonElement>(null);
+  const menuPortalRef = useRef<HTMLDivElement>(null);
+  const [menuFixedStyle, setMenuFixedStyle] = useState<{
+    top: number;
+    left: number;
+  } | null>(null);
+
+  useLayoutEffect(() => {
+    if (!menuOpen || deleting || !menuTriggerRef.current) {
+      setMenuFixedStyle(null);
+      return;
+    }
+    const r = menuTriggerRef.current.getBoundingClientRect();
+    const menuWidth = 160;
+    setMenuFixedStyle({
+      top: r.bottom + 4,
+      left: Math.max(8, r.right - menuWidth),
+    });
+  }, [menuOpen, deleting]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    function onPointerDown(e: PointerEvent) {
+      const t = e.target as Node;
+      if (wrapRef.current?.contains(t)) return;
+      if (menuPortalRef.current?.contains(t)) return;
+      onCloseMenu();
+    }
+    document.addEventListener('pointerdown', onPointerDown, true);
+    return () => document.removeEventListener('pointerdown', onPointerDown, true);
+  }, [menuOpen, onCloseMenu]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    function onScrollOrResize() {
+      onCloseMenu();
+    }
+    window.addEventListener('resize', onScrollOrResize);
+    window.addEventListener('scroll', onScrollOrResize, true);
+    return () => {
+      window.removeEventListener('resize', onScrollOrResize);
+      window.removeEventListener('scroll', onScrollOrResize, true);
+    };
+  }, [menuOpen, onCloseMenu]);
+
+  const displayTitle = session.title?.trim() || fallbackTitle;
+
+  const menuContent =
+    menuOpen && !deleting && menuFixedStyle ? (
+      <div
+        ref={menuPortalRef}
+        role="menu"
+        className="fixed z-[300] w-40 rounded-xl border border-slate-200/95 bg-white p-1 shadow-[0_6px_20px_-6px_rgba(0,0,0,0.12),0_2px_8px_-2px_rgba(0,0,0,0.06)] dark:border-slate-600/90 dark:bg-slate-900 dark:shadow-[0_6px_24px_-6px_rgba(0,0,0,0.4)]"
+        style={{ top: menuFixedStyle.top, left: menuFixedStyle.left }}
+      >
+        <button
+          type="button"
+          role="menuitem"
+          className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs font-medium text-slate-800 transition hover:bg-slate-100 dark:text-slate-100 dark:hover:bg-slate-800/90"
+          onClick={() => {
+            onRename();
+            onCloseMenu();
+          }}
+        >
+          <IconPencilOutline className="h-3.5 w-3.5 shrink-0 text-slate-600 dark:text-slate-300" />
+          <span>Rename</span>
+        </button>
+        <div className="my-0.5 h-px bg-slate-100 dark:bg-slate-700/90" aria-hidden />
+        <button
+          type="button"
+          role="menuitem"
+          className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs font-medium text-red-600 transition hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/35"
+          onClick={() => {
+            onDelete();
+            onCloseMenu();
+          }}
+        >
+          <IconTrashOutline className="h-3.5 w-3.5 shrink-0 text-red-600 dark:text-red-400" />
+          <span>Delete</span>
+        </button>
+      </div>
+    ) : null;
+
+  return (
+    <li>
+      <div
+        ref={wrapRef}
+        className={`flex items-stretch rounded-xl border transition ${
+          selected
+            ? 'border-primary/40 bg-primary/10 dark:bg-primary/15'
+            : 'border-transparent hover:bg-slate-100 dark:hover:bg-slate-800/80'
+        }`}
+      >
+        <button type="button" className="min-w-0 flex-1 px-2.5 py-2.5 text-left" onClick={onSelect}>
+          <span className="block truncate text-[11px] font-medium text-slate-800 dark:text-slate-100">
+            {displayTitle}
+          </span>
+          <span className="mt-0.5 block truncate text-[10px] text-slate-500 dark:text-slate-400">
+            {formatSessionLabel(session.updatedAt)}
+          </span>
+        </button>
+        <div className="relative flex shrink-0">
+          <button
+            ref={menuTriggerRef}
+            type="button"
+            className="flex h-full min-h-[2.75rem] w-9 shrink-0 items-center justify-center rounded-r-xl text-slate-500 transition hover:bg-slate-200/80 hover:text-slate-800 disabled:opacity-50 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+            aria-expanded={menuOpen}
+            aria-haspopup="menu"
+            aria-label="Conversation options"
+            disabled={deleting}
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleMenu();
+            }}
+          >
+            {deleting ? (
+              <motion.div
+                className="h-3.5 w-3.5 rounded-full border-2 border-current border-t-transparent"
+                animate={{ rotate: 360 }}
+                transition={{ duration: 0.7, repeat: Infinity, ease: 'linear' }}
+              />
+            ) : (
+              <IconDotsHorizontal className="h-4 w-4" />
+            )}
+          </button>
+        </div>
+      </div>
+      {menuContent ? createPortal(menuContent, document.body) : null}
+    </li>
+  );
+}
+
 function TypingIndicator() {
   return (
     <div className="flex items-center gap-1 px-1 py-2" aria-live="polite" aria-label="Assistant is responding">
@@ -134,6 +319,9 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
   /** Modal + mobile: conversations drawer over chat (like admin menu). */
   const [mobileConvOpen, setMobileConvOpen] = useState(false);
   const isMd = useMediaQueryMd();
+  const [sessionMenuOpenId, setSessionMenuOpenId] = useState<string | null>(null);
+  const [renameState, setRenameState] = useState<{ sessionId: string; title: string } | null>(null);
+  const [renameSubmitting, setRenameSubmitting] = useState(false);
 
   const loadStatus = useCallback(async () => {
     setStatusError(null);
@@ -194,6 +382,8 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
   useEffect(() => {
     setModalSidebarCollapsed(false);
     setMobileConvOpen(false);
+    setSessionMenuOpenId(null);
+    setRenameState(null);
   }, [agentId]);
 
   useEffect(() => {
@@ -243,6 +433,23 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
       }
     } catch (e) {
       setActionError(getRequestErrorMessage(e));
+    }
+  };
+
+  const submitRename = async () => {
+    if (!renameState?.title.trim()) {
+      return;
+    }
+    setRenameSubmitting(true);
+    setActionError(null);
+    try {
+      await renameChatSession(agentId, renameState.sessionId, renameState.title.trim());
+      setRenameState(null);
+      await loadSessions();
+    } catch (e) {
+      setActionError(getRequestErrorMessage(e));
+    } finally {
+      setRenameSubmitting(false);
     }
   };
 
@@ -401,6 +608,7 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
     !emptySession && !messagesLoading && messages.length === 0 && !sending;
 
   return (
+    <>
     <div
       className={`${shellGap} flex ${chatSize} flex-col overflow-hidden ${
         isModal
@@ -528,62 +736,36 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
                   </p>
                 ) : (
                   <ul className="space-y-1">
-                    {sessions.map((s, i) => (
-                      <li key={s.sessionId}>
-                        <div
-                          className={`flex items-stretch gap-0.5 overflow-hidden rounded-xl border transition ${
-                            selectedSessionId === s.sessionId
-                              ? 'border-primary/40 bg-primary/10 dark:bg-primary/15'
-                              : 'border-transparent hover:bg-slate-100 dark:hover:bg-slate-800/80'
-                          }`}
-                        >
-                          <button
-                            type="button"
-                            className="min-w-0 flex-1 px-2.5 py-2.5 text-left"
-                            onClick={() => {
-                              setSelectedSessionId(s.sessionId);
-                              if (!isMd) {
-                                setMobileConvOpen(false);
-                              }
-                            }}
-                          >
-                            <span className="block text-[11px] font-medium text-slate-800 dark:text-slate-100">
-                              Conversation {sessions.length - i}
-                            </span>
-                            <span className="mt-0.5 block truncate text-[10px] text-slate-500 dark:text-slate-400">
-                              {formatSessionLabel(s.updatedAt)}
-                            </span>
-                          </button>
-                          <button
-                            type="button"
-                            className="flex w-9 shrink-0 items-center justify-center rounded-r-lg text-slate-400 transition hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400"
-                            disabled={deletingId === s.sessionId}
-                            aria-label="Delete conversation"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              void onDeleteSession(s.sessionId);
-                            }}
-                          >
-                            {deletingId === s.sessionId ? (
-                              <motion.div
-                                className="h-3.5 w-3.5 rounded-full border-2 border-current border-t-transparent"
-                                animate={{ rotate: 360 }}
-                                transition={{ duration: 0.7, repeat: Infinity, ease: 'linear' }}
-                              />
-                            ) : (
-                              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                />
-                              </svg>
-                            )}
-                          </button>
-                        </div>
-                      </li>
-                    ))}
+                    {sessions.map((s, i) => {
+                      const fallbackTitle = `Conversation ${sessions.length - i}`;
+                      return (
+                        <ConversationSessionRow
+                          key={s.sessionId}
+                          session={s}
+                          fallbackTitle={fallbackTitle}
+                          selected={selectedSessionId === s.sessionId}
+                          deleting={deletingId === s.sessionId}
+                          menuOpen={sessionMenuOpenId === s.sessionId}
+                          onToggleMenu={() =>
+                            setSessionMenuOpenId((id) => (id === s.sessionId ? null : s.sessionId))
+                          }
+                          onCloseMenu={() => setSessionMenuOpenId(null)}
+                          onSelect={() => {
+                            setSelectedSessionId(s.sessionId);
+                            if (!isMd) {
+                              setMobileConvOpen(false);
+                            }
+                          }}
+                          onRename={() => {
+                            setRenameState({
+                              sessionId: s.sessionId,
+                              title: s.title?.trim() || fallbackTitle,
+                            });
+                          }}
+                          onDelete={() => void onDeleteSession(s.sessionId)}
+                        />
+                      );
+                    })}
                   </ul>
                 )}
               </div>
@@ -617,57 +799,31 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
                 </p>
               ) : (
                 <ul className="space-y-1">
-                  {sessions.map((s, i) => (
-                    <li key={s.sessionId}>
-                      <div
-                        className={`flex items-stretch gap-0.5 overflow-hidden rounded-xl border transition ${
-                          selectedSessionId === s.sessionId
-                            ? 'border-primary/40 bg-primary/10 dark:bg-primary/15'
-                            : 'border-transparent hover:bg-slate-100 dark:hover:bg-slate-800/80'
-                        }`}
-                      >
-                        <button
-                          type="button"
-                          className="min-w-0 flex-1 px-2.5 py-2.5 text-left"
-                          onClick={() => setSelectedSessionId(s.sessionId)}
-                        >
-                          <span className="block text-[11px] font-medium text-slate-800 dark:text-slate-100">
-                            Conversation {sessions.length - i}
-                          </span>
-                          <span className="mt-0.5 block truncate text-[10px] text-slate-500 dark:text-slate-400">
-                            {formatSessionLabel(s.updatedAt)}
-                          </span>
-                        </button>
-                        <button
-                          type="button"
-                          className="flex w-9 shrink-0 items-center justify-center rounded-r-lg text-slate-400 transition hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400"
-                          disabled={deletingId === s.sessionId}
-                          aria-label="Delete conversation"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            void onDeleteSession(s.sessionId);
-                          }}
-                        >
-                          {deletingId === s.sessionId ? (
-                            <motion.div
-                              className="h-3.5 w-3.5 rounded-full border-2 border-current border-t-transparent"
-                              animate={{ rotate: 360 }}
-                              transition={{ duration: 0.7, repeat: Infinity, ease: 'linear' }}
-                            />
-                          ) : (
-                            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                              />
-                            </svg>
-                          )}
-                        </button>
-                      </div>
-                    </li>
-                  ))}
+                  {sessions.map((s, i) => {
+                    const fallbackTitle = `Conversation ${sessions.length - i}`;
+                    return (
+                      <ConversationSessionRow
+                        key={s.sessionId}
+                        session={s}
+                        fallbackTitle={fallbackTitle}
+                        selected={selectedSessionId === s.sessionId}
+                        deleting={deletingId === s.sessionId}
+                        menuOpen={sessionMenuOpenId === s.sessionId}
+                        onToggleMenu={() =>
+                          setSessionMenuOpenId((id) => (id === s.sessionId ? null : s.sessionId))
+                        }
+                        onCloseMenu={() => setSessionMenuOpenId(null)}
+                        onSelect={() => setSelectedSessionId(s.sessionId)}
+                        onRename={() => {
+                          setRenameState({
+                            sessionId: s.sessionId,
+                            title: s.title?.trim() || fallbackTitle,
+                          });
+                        }}
+                        onDelete={() => void onDeleteSession(s.sessionId)}
+                      />
+                    );
+                  })}
                 </ul>
               )}
             </div>
@@ -836,5 +992,59 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
         </div>
       </div>
     </div>
+    {renameState
+      ? createPortal(
+          <div
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-[1px]"
+            role="presentation"
+            onClick={() => !renameSubmitting && setRenameState(null)}
+          >
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="rename-conv-title"
+              className="w-full max-w-sm rounded-2xl border border-slate-200/90 bg-white p-5 shadow-2xl dark:border-slate-700 dark:bg-slate-900"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 id="rename-conv-title" className="text-base font-semibold text-slate-900 dark:text-white">
+                Rename conversation
+              </h3>
+              <div className="mt-4">
+                <Input
+                  label="Title"
+                  id="rename-conv-input"
+                  value={renameState.title}
+                  onChange={(e) => setRenameState((prev) => (prev ? { ...prev, title: e.target.value } : null))}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      void submitRename();
+                    }
+                  }}
+                  placeholder="Conversation title"
+                  disabled={renameSubmitting}
+                  autoFocus
+                />
+              </div>
+              <div className="mt-5 flex flex-wrap justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="bg-slate-200 text-slate-800 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600"
+                  disabled={renameSubmitting}
+                  onClick={() => setRenameState(null)}
+                >
+                  Cancel
+                </Button>
+                <Button type="button" disabled={renameSubmitting || !renameState.title.trim()} onClick={() => void submitRename()}>
+                  {renameSubmitting ? 'Saving…' : 'Save'}
+                </Button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )
+      : null}
+    </>
   );
 }

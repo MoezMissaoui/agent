@@ -25,6 +25,7 @@ export type ChatStatusPayload = {
 
 export type ChatSessionRow = {
   sessionId: string;
+  title: string | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -70,6 +71,7 @@ export class AgentChatService {
     return {
       sessions: rows.map((s) => ({
         sessionId: s.identifier,
+        title: s.title,
         createdAt: s.createdAt,
         updatedAt: s.updatedAt,
       })),
@@ -221,6 +223,32 @@ export class AgentChatService {
       userMessageId: savedUser.identifier,
       assistantMessageId: savedAsst.identifier,
     };
+  }
+
+  async renameSession(
+    userIdentifier: string,
+    agentUuid: string,
+    sessionUuid: string,
+    rawTitle: string,
+  ): Promise<{ sessionId: string; title: string }> {
+    const title = rawTitle.trim();
+    if (!title) {
+      throw new BadRequestException('Title is required.');
+    }
+    if (title.length > 255) {
+      throw new BadRequestException('Title must be at most 255 characters.');
+    }
+    const agent = await this.resolveAgent(userIdentifier, agentUuid);
+    await this.assertChatEnabled(agent.id);
+    const session = await this.sessions.findOne({
+      where: { agentId: agent.id, identifier: sessionUuid },
+    });
+    if (!session) {
+      throw new NotFoundException('Chat session not found');
+    }
+    session.title = title;
+    await this.sessions.save(session);
+    return { sessionId: session.identifier, title };
   }
 
   async deleteSession(

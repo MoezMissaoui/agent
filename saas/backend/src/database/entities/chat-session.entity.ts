@@ -28,6 +28,10 @@ export class ChatSession {
   @JoinColumn({ name: 'agent_id' })
   agent: Agent;
 
+  /** Optional user-defined label; when null, UI shows a generated title (e.g. Conversation N). */
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  title: string | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

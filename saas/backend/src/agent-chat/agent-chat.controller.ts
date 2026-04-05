@@ -6,6 +6,7 @@ import {
   HttpCode,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
   Req,
 } from '@nestjs/common';
@@ -17,6 +18,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { AgentChatService } from './agent-chat.service';
+import { RenameChatSessionDto } from './dto/rename-chat-session.dto';
 import { SendChatMessageDto } from './dto/send-chat-message.dto';
 
 type AuthedRequest = Express.Request & {
@@ -77,6 +79,22 @@ export class AgentChatController {
     @Param('sessionId', new ParseUUIDPipe({ version: '4' })) sessionId: string,
   ) {
     return this.chat.getSessionMessages(req.user.userId, agentId, sessionId);
+  }
+
+  @Patch('sessions/:sessionId')
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Renommer une session de chat' })
+  @ApiResponse({ status: 200, description: 'OK' })
+  @ApiResponse({ status: 400, description: 'Titre invalide' })
+  @ApiResponse({ status: 403, description: 'Chat désactivé' })
+  @ApiResponse({ status: 404, description: 'Session introuvable' })
+  renameSession(
+    @Req() req: AuthedRequest,
+    @Param('agentId', new ParseUUIDPipe({ version: '4' })) agentId: string,
+    @Param('sessionId', new ParseUUIDPipe({ version: '4' })) sessionId: string,
+    @Body() dto: RenameChatSessionDto,
+  ) {
+    return this.chat.renameSession(req.user.userId, agentId, sessionId, dto.title);
   }
 
   @Delete('sessions/:sessionId')

@@ -9,6 +9,8 @@ export type ChatStatus = {
 
 export type ChatSessionSummary = {
   sessionId: string;
+  /** Custom label; when null/empty, UI shows a default like "Conversation N". */
+  title: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -37,6 +39,18 @@ export async function createChatSession(agentId: string): Promise<{ sessionId: s
 
 export async function deleteChatSession(agentId: string, sessionId: string): Promise<void> {
   await api.delete(`${base(agentId)}/sessions/${encodeURIComponent(sessionId)}`);
+}
+
+export async function renameChatSession(
+  agentId: string,
+  sessionId: string,
+  title: string,
+): Promise<{ sessionId: string; title: string }> {
+  const { data } = await api.patch<{ sessionId: string; title: string }>(
+    `${base(agentId)}/sessions/${encodeURIComponent(sessionId)}`,
+    { title },
+  );
+  return data;
 }
 
 export async function getChatSessionMessages(
