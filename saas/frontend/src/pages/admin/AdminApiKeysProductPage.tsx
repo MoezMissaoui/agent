@@ -431,7 +431,7 @@ export function AdminApiKeysProductPage() {
                     {!noExpiry ? (
                       <DateTimePickerField
                         id="token-expires-at"
-                        label="Expires at (local)"
+                        label="Expires at"
                         value={expires}
                         onChange={setExpires}
                       />
