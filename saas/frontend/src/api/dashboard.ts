@@ -2,7 +2,9 @@ import { api } from '../lib/api';
 
 export type DashboardRecentSession = {
   sessionId: string;
+  agentId: string;
   agentName: string;
+  sessionTitle: string | null;
   updatedAt: string;
 };
 

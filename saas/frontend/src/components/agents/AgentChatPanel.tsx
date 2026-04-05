@@ -21,6 +21,8 @@ type Props = {
   refreshKey: number;
   /** `modal`: fills the parent container (e.g. full-screen modal). */
   layout?: 'card' | 'modal';
+  /** When set, that session is selected after sessions load (consumed once per successful match). */
+  initialSessionId?: string | null;
 };
 
 function SendIcon({ className }: { className?: string }) {
@@ -291,7 +293,7 @@ function TypingIndicator() {
   );
 }
 
-export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) {
+export function AgentChatPanel({ agentId, refreshKey, layout = 'card', initialSessionId = null }: Props) {
   const isModal = layout === 'modal';
   const shellGap = isModal ? 'mt-0' : 'mt-4';
   const chatSize = isModal
@@ -322,6 +324,11 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
   const [sessionMenuOpenId, setSessionMenuOpenId] = useState<string | null>(null);
   const [renameState, setRenameState] = useState<{ sessionId: string; title: string } | null>(null);
   const [renameSubmitting, setRenameSubmitting] = useState(false);
+  const pendingInitialSessionRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    pendingInitialSessionRef.current = initialSessionId?.trim() || null;
+  }, [initialSessionId]);
 
   const loadStatus = useCallback(async () => {
     setStatusError(null);
@@ -344,6 +351,11 @@ export function AgentChatPanel({ agentId, refreshKey, layout = 'card' }: Props) 
       const { sessions: list } = await listChatSessions(agentId);
       setSessions(list);
       setSelectedSessionId((prev) => {
+        const pending = pendingInitialSessionRef.current;
+        if (pending && list.some((x) => x.sessionId === pending)) {
+          pendingInitialSessionRef.current = null;
+          return pending;
+        }
         if (prev && list.some((x) => x.sessionId === prev)) {
           return prev;
         }

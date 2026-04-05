@@ -10,7 +10,10 @@ import { DocumentStatus } from '../database/enums/document-status.enum';
 
 export type DashboardRecentSession = {
   sessionId: string;
+  agentId: string;
   agentName: string;
+  /** User-defined conversation title; null when unset. */
+  sessionTitle: string | null;
   updatedAt: string;
 };
 
@@ -78,13 +81,15 @@ export class DashboardService {
         where: { agentId: In(agentIds) },
         relations: ['agent'],
         order: { updatedAt: 'DESC' },
-        take: 8,
+        take: 5,
       }),
     ]);
 
     const recentSessions: DashboardRecentSession[] = recentRows.map((s) => ({
       sessionId: s.identifier,
+      agentId: s.agent?.identifier ?? '',
       agentName: s.agent?.name?.trim() || 'Agent',
+      sessionTitle: s.title?.trim() ? s.title.trim() : null,
       updatedAt: s.updatedAt.toISOString(),
     }));
 
