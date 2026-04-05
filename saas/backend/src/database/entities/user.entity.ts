@@ -9,7 +9,6 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Agent } from './agent.entity';
-import { ApiKey } from './api-key.entity';
 import { UserAuthToken } from './user-auth-token.entity';
 
 @Entity('users')
@@ -44,9 +43,6 @@ export class User {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
-
-  @OneToMany(() => ApiKey, (k) => k.user)
-  apiKeys: ApiKey[];
 
   @OneToMany(() => Agent, (a) => a.user)
   agents: Agent[];

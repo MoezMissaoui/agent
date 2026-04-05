@@ -7,7 +7,7 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { User } from './user.entity';
+import { Agent } from './agent.entity';
 
 @Entity('api_keys')
 export class ApiKey {
@@ -17,12 +17,12 @@ export class ApiKey {
   @Column({ name: 'identifier', type: 'varchar', length: 36, unique: true })
   identifier: string;
 
-  @Column({ name: 'user_id', type: 'int' })
-  userId: number;
+  @Column({ name: 'agent_id', type: 'int' })
+  agentId: number;
 
-  @ManyToOne(() => User, (u) => u.apiKeys, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'user_id' })
-  user: User;
+  @ManyToOne(() => Agent, (a) => a.apiKeys, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'agent_id' })
+  agent: Agent;
 
   @Column({ unique: true })
   token: string;

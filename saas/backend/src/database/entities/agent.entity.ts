@@ -10,6 +10,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { ApiKey } from './api-key.entity';
 import { User } from './user.entity';
 import { ChatSession } from './chat-session.entity';
 import { Document } from './document.entity';
@@ -52,6 +53,9 @@ export class Agent {
 
   @OneToMany(() => ChatSession, (s) => s.agent)
   chatSessions: ChatSession[];
+
+  @OneToMany(() => ApiKey, (k) => k.agent)
+  apiKeys: ApiKey[];
 
   @BeforeInsert()
   ensureIdentifier() {
