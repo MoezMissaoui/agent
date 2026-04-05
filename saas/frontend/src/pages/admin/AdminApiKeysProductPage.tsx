@@ -202,7 +202,7 @@ export function AdminApiKeysProductPage() {
             <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">API access</h1>
             <p className="mt-1 max-w-xl text-sm text-slate-600 dark:text-slate-400">
               Issue up to {MAX_AGENT_API_ACCESS_TOKENS} access tokens per assistant. Send the token in the{' '}
-              <code className="rounded bg-slate-100 px-1 dark:bg-slate-800">X-API-Key</code> header for server-side
+              <code className="rounded bg-slate-100 px-1 dark:bg-slate-800">access-token</code> header for server-side
               calls to that assistant&apos;s routes. Optional expiry, or unlimited when left blank.
             </p>
           </div>
